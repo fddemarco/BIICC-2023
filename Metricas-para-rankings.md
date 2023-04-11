@@ -319,7 +319,7 @@ A potential downside of NDPM in some applications is that it does not consider t
 
 ### Fraction of Concordan Pairs (FCP)
 
-he Fraction of Concordant Pairs (FCP) is a metric used to evaluate the performance of ranking algorithms. It is often used in information retrieval and is a measure of the agreement between the orderings produced by two rankers for the same set of items.
+The Fraction of Concordant Pairs (FCP) is a metric used to evaluate the performance of ranking algorithms. It is often used in information retrieval and is a measure of the agreement between the orderings produced by two rankers for the same set of items.
 
 The FCP metric is based on pairs of items and their corresponding rankings. Given two rankings, the first step is to consider all possible pairs of items that appear in both rankings. For each such pair, we determine whether the relative order of the two items is the same in both rankings (i.e., they are concordant) or whether their order is different (i.e., they are discordant).
 
