@@ -1,8 +1,6 @@
 import os
-
-
-def month_to_str(month):
-    return str(month).zfill(2)
+from reddit_data_processor import SubmissionsProcessor
+from reddit_data_processor import CommentsProcessor
 
 
 class PushshiftDataset:
@@ -36,6 +34,12 @@ class PushshiftDataset:
         elif self.dataset == 'comments':
             return 'pushshift-reddit-comments'
 
+    def data_processor(self):
+        if self.dataset == 'submissions':
+            return SubmissionsProcessor(self)
+        elif self.dataset == 'comments':
+            return CommentsProcessor(self)
+
     @staticmethod
     def valid_dataset(name):
         if name not in ['submissions', 'comments']:
@@ -50,3 +54,7 @@ class PushshiftDataset:
     def valid_year(year):
         if year not in range(2006, 2018+1):
             raise ValueError(f'Invalid argument ({year}). Please provide a valid year (2006-2018).')
+
+
+def month_to_str(month):
+    return str(month).zfill(2)

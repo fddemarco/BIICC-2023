@@ -1,2 +1,4 @@
 tqdm==4.65.0
 pandas==2.0.0
+orjson==3.8.10
+pyarrow==11.0.0

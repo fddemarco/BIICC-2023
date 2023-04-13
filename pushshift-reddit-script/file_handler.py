@@ -1,5 +1,4 @@
 import os
-from reddit_data_processor import RedditDataProcessor
 from glob import glob
 import pandas as pd
 
@@ -9,8 +8,7 @@ class FileHandler:
         change_wd(file)
         self.file = file.pushshift_path()
         self.url = file.url()
-        self.data_processor = RedditDataProcessor(file)
-        self.split_line = 800000
+        self.data_processor = file.data_processor()
 
     def download(self):
         if not self.downloaded():
