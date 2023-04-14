@@ -19,7 +19,7 @@ class RedditDataProcessor:
             with open(output_file, "wb") as w:
                 for json_obj in r:
                     raw_data = orjson.loads(json_obj)
-                    data = self.process_json(raw_data)
+                    data = self.process_data(raw_data)
                     if self.has_text(data):
                         w.write(orjson.dumps(data) + bytes('\n', 'utf-8'))
 
@@ -30,18 +30,19 @@ class RedditDataProcessor:
         raise NotImplementedError("This method should be implemented in a subclass.")
 
     def has_text(self, data):
-        return any(data[k] for k in self.text_keys())
+        return any(data.get(k, None) for k in self.text_keys())
 
-    def process_json(self, json_data):
+    def process_data(self, data):
         features = self.selected_features()
-        selected_data = {f: json_data.get(f, None) for f in features}
-        self.clean_texts(selected_data)
+        selected_data = {f: data.get(f, None) for f in features}
+        self.process_features(selected_data, self.text_keys(), clean_text)
         return selected_data
 
-    def clean_texts(self, selected_data):
-        for k in self.text_keys():
-            text = selected_data[k]
-            selected_data[k] = clean_text('' if text is None else text)
+    @staticmethod
+    def process_features(data, features, process_feature):
+        for k in features:
+            feature = data.get(k, None)
+            data[k] = process_feature(feature)
 
     def small_format(self):
         return f"{self.file_name}_small.json"
@@ -49,10 +50,10 @@ class RedditDataProcessor:
 
 class CommentsProcessor(RedditDataProcessor):
     def text_keys(self):
-        return ["body"]
+        return {"body"}
 
     def selected_features(self):
-        return ['author',
+        return {'author',
                 'body',
                 'controversiality',
                 'created_utc',
@@ -61,15 +62,15 @@ class CommentsProcessor(RedditDataProcessor):
                 'score',
                 'subreddit',
                 'subreddit_id'
-                ]
+                }
 
 
 class SubmissionsProcessor(RedditDataProcessor):
     def text_keys(self):
-        return ["selftext", "title"]
+        return {"selftext", "title"}
 
     def selected_features(self):
-        return ['author',
+        return {'author',
                 'created_utc',
                 'id',
                 'num_comments',
@@ -78,7 +79,7 @@ class SubmissionsProcessor(RedditDataProcessor):
                 'subreddit',
                 'subreddit_id',
                 'title'
-                ]
+                }
 
 
 # TODO: r/subreddit to mention subreddit
