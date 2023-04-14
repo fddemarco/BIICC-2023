@@ -9,32 +9,20 @@ COMMENTS = 'comments'
 SUBMISSIONS = 'submissions'
 
 
-class Pushshift:
-    def __init__(
-            self,
-            dataset,
-            years,
-            months,
-            file_operation
-    ):
-        self.dataset = dataset
-        self.years = years
-        self.months = months
-        self.file_operation = file_operation
+def process_monthly_dataset(dataset, month, year, process):
+    monthly_dataset = PushshiftDataset(dataset, month, year)
+    file = FileHandler(monthly_dataset)
+    process(file)
 
-    def run(self):
-        for year in tqdm(self.years):
-            for month in tqdm(self.months, leave=False):
-                self.process_monthly_dataset(month, year)
 
-    def process_monthly_dataset(self, month, year):
-        monthly_dataset = PushshiftDataset(self.dataset, month, year)
-        file = FileHandler(monthly_dataset)
-        self.file_operation(file)
+def run(dataset, years, months, process):
+    for year in tqdm(years):
+        for month in tqdm(months, leave=False):
+            process_monthly_dataset(dataset, month, year, process)
 
 
 if __name__ == '__main__':
-    Pushshift(
+    run(
         SUBMISSIONS,
         [2006, 2007],
         [2, 3],
@@ -44,4 +32,4 @@ if __name__ == '__main__':
             file.reduce_data(),
             to_parquet(file.small_format())
         ))
-    ).run()
+    )
