@@ -1,3 +1,5 @@
+import string
+
 import orjson
 import os
 import re
@@ -79,13 +81,18 @@ class SubmissionsProcessor(RedditDataProcessor):
                 ]
 
 
-# r/subreddit to mention subreddit
-# u/username to mention user
+# TODO: r/subreddit to mention subreddit
+# TODO: u/username to mention user
 def clean_text(text):
+    if text is None:
+        raise TypeError("Input text cannot be None.")
+
     text = text.replace('[removed]', '')  # comment:'[removed]' (by user)
     text = text.replace('[deleted]', '')  # comment:'[deleted]' (by moderator)
     if text:
-        text = re.sub(r"([.!?,'/()])", r" \1", text)  # Matches punctuation characters and captures them
-        text = re.sub(r"\s+", ' ', text)  # Matches Unicode whitespace characters
+        punctuation_chars = re.escape(string.punctuation)
+        text = re.sub(r"([" + punctuation_chars + r"])", r" \1", text)
+        text = re.sub(r"\s+", ' ', text)
         text = text.lower()
+        text = text.strip(' ')
     return text
