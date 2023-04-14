@@ -36,9 +36,9 @@ class PushshiftDataset:
 
     def data_processor(self):
         if self.dataset == 'submissions':
-            return SubmissionsProcessor(self)
+            return SubmissionsProcessor(self.pushshift_path())
         elif self.dataset == 'comments':
-            return CommentsProcessor(self)
+            return CommentsProcessor(self.pushshift_path())
 
     @staticmethod
     def valid_dataset(name):

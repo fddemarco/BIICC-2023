@@ -5,8 +5,7 @@ import re
 
 class RedditDataProcessor:
     def __init__(self, file):
-        self.file_name = file.pushshift_path()
-        self.dataset = file.value()
+        self.file_name = file
 
     def reduce_data(self):
         output_file = self.small_format()
