@@ -19,8 +19,13 @@ class FileHandler:
         return any(existing_files)
 
     def decompress(self):
-        compressed_file = self.compressed_format()
-        os.system(f'zstd -d --rm --long=31 {compressed_file}')
+        if not self.decompressed():
+            compressed_file = self.compressed_format()
+            os.system(f'zstd -d --rm --long=31 {compressed_file}')
+
+    def decompressed(self):
+        existing_files = glob(self.file + self.raw_format())
+        return any(existing_files)
 
     def format_path(self, suffix):
         return self.file + suffix
