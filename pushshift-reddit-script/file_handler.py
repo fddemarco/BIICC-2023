@@ -6,16 +6,16 @@ import pandas as pd
 class FileHandler:
     def __init__(self, file):
         change_wd(file)
-        self.file = file.pushshift_path()
+        self.pathname = file.pushshift_path()
         self.url = file.url()
         self.data_processor = file.data_processor()
 
     def download(self):
         if not self.downloaded():
-            os.system(f"wget -O {self.file + '.zst'} {self.url}")
+            os.system(f"wget -O {self.pathname + '.zst'} {self.url}")
 
     def downloaded(self):
-        existing_files = glob(self.file + '*')
+        existing_files = glob(self.pathname + '*')
         return any(existing_files)
 
     def decompress(self):
@@ -24,17 +24,17 @@ class FileHandler:
             os.system(f'zstd -d --rm --long=31 {compressed_file}')
 
     def decompressed(self):
-        existing_files = glob(self.file + self.raw_format())
+        existing_files = glob(self.pathname + self.raw_format())
         return any(existing_files)
 
     def format_path(self, suffix):
-        return self.file + suffix
+        return self.pathname + suffix
 
     def compressed_format(self):
         return self.format_path(self.compressed_suffix())
 
     def raw_format(self):
-        return self.file
+        return self.pathname
 
     def small_format(self):
         return self.format_path(self.small_suffix())
@@ -51,7 +51,7 @@ class FileHandler:
         return '_small.json'
 
     def delete(self, suffix=''):
-        file = self.file + suffix
+        file = self.pathname + suffix
         if os.path.exists(file):
             os.remove(file)
 

@@ -1,49 +1,44 @@
 import os
 from reddit_data_processor import SubmissionsProcessor
 from reddit_data_processor import CommentsProcessor
+from file_handler import FileHandler
 
 
 class PushshiftDataset:
-    def __init__(self, dataset, month, year):
-        self.valid_dataset(dataset)
-        self.valid_month(month)
-        self.valid_year(year)
-        self.dataset = dataset
+    def __init__(self, month, year):
+        self.valid_input(month, year)
+
         self.month = month_to_str(month)
         self.year = str(year)
         self.base_local_dir = '/media/franco/disco/BIICC/git-lfs/'
 
+    def valid_input(self, month, year):
+        self.valid_month(month)
+        self.valid_year(year)
+
     def value(self):
-        if self.dataset == 'submissions':
-            return 'RS'
-        elif self.dataset == 'comments':
-            return 'RC'
+        raise NotImplementedError("This method should be implemented in a subclass.")
 
     def pushshift_path(self):
         return f"{self.value()}_{self.year}-{self.month}"
 
     def url(self):
-        return f"https://files.pushshift.io/reddit/{self.dataset}/{self.pushshift_path()}.zst"
+        return f"https://files.pushshift.io/reddit/{self.dataset_url()}/{self.pushshift_path()}.zst"
+
+    def dataset_url(self):
+        raise NotImplementedError("This method should be implemented in a subclass.")
 
     def build_local_path(self):
         return os.path.join(self.base_local_dir, self.dataset_folder(), 'data')
 
     def dataset_folder(self):
-        if self.dataset == 'submissions':
-            return 'pushshift-reddit'
-        elif self.dataset == 'comments':
-            return 'pushshift-reddit-comments'
+        raise NotImplementedError("This method should be implemented in a subclass.")
 
     def data_processor(self):
-        if self.dataset == 'submissions':
-            return SubmissionsProcessor(self.pushshift_path())
-        elif self.dataset == 'comments':
-            return CommentsProcessor(self.pushshift_path())
+        raise NotImplementedError("This method should be implemented in a subclass.")
 
-    @staticmethod
-    def valid_dataset(name):
-        if name not in ['submissions', 'comments']:
-            raise ValueError(f'Invalid argument ({name}). Please provide either "submissions" or "comments".')
+    def file_handler(self):
+        return FileHandler(self)
 
     @staticmethod
     def valid_month(month):
@@ -55,6 +50,33 @@ class PushshiftDataset:
         if year not in range(2006, 2018+1):
             raise ValueError(f'Invalid argument ({year}). Please provide a valid year (2006-2018).')
 
+
+class CommentsDataset(PushshiftDataset):
+    def value(self):
+        return 'RC'
+
+    def data_processor(self):
+        return CommentsProcessor(self.pushshift_path())
+
+    def dataset_folder(self):
+        return 'pushshift-reddit-comments'
+
+    def dataset_url(self):
+        return 'comments'
+
+
+class SubmissionsDataset(PushshiftDataset):
+    def value(self):
+        return 'RS'
+
+    def data_processor(self):
+        return SubmissionsProcessor(self.pushshift_path())
+
+    def dataset_folder(self):
+        return 'pushshift-reddit'
+
+    def dataset_url(self):
+        return 'submissions'
 
 def month_to_str(month):
     return str(month).zfill(2)
