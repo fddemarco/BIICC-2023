@@ -11,7 +11,7 @@
 El código fuente se encuentra aquí:
 - https://github.com/facebookresearch/fastText/releases
 
-Hay un tutorial para instalarlo, pero está desactualizado (links que no funcionan y explicaciones erroneas).
+Hay un tutorial para instalarlo, pero está desactualizado.
 - https://fasttext.cc/docs/en/supervised-tutorial.html
 
 Agregar directorio a PATH para no tener que hacer ./.../fasttext:
@@ -35,6 +35,21 @@ Correr contra validation set (calcula P@k y R@k):
 $ fasttext test model.bin cooking.valid 5
 
 (Aquí, k = 5)
+
+Formato:
+Cada documento tiene que ser una sola linea. Los documentos se separan con \n. Cada documento debe iniciar con "__label__nombre [espacio en blanco] ".
+
+
+### Modo no Supervisado:
+
+Entrenar: 
+$ fasttext skipgram -input data/subreddits.txt -output result/subreddit -epoch 1 -dim 300
+
+Se puede modificar la cantidad de threads que usa fasttext con -threads
+
+Formato:
+Cada documento tiene que ser una sola linea. Los documentos se separan con \n.
+
 
 ### Making the model better
 
