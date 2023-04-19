@@ -1,3 +1,4 @@
-pushshift-reddit-script/.idea/
-pushshift-reddit-script/__pycache__/
+*/.idea/
+*/__pycache__/
 .ipynb_checkpoints/
+*/paths.py
