@@ -1,6 +1,7 @@
 */.idea/
 */__pycache__/
 .ipynb_checkpoints/
-*/paths.py
+*/paths/*
+*/tests/*
 */dimen_generation
 
