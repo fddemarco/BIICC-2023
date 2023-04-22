@@ -7,10 +7,33 @@ from file_handler import FileHandler
 class PushshiftDataset:
     def __init__(self, month, year):
         self.valid_input(month, year)
-
+        self.base_local_dir = self.valid_environment()
         self.month = month_to_str(month)
         self.year = str(year)
-        self.base_local_dir = '/media/franco/disco/BIICC/git-lfs/'
+
+    @staticmethod
+    def valid_environment():
+        repo_path = os.environ.get('HUGGINGFACE_DIR_PATH')
+        help_message = (
+            "Please set it to the absolute path of your git repository folder, e.g.: \n\n"
+            "if your repository is at /path/to/your/git/repo, do "
+            "export HUGGINGFACE_DIR_PATH=/path/to/your/git\n\n"
+            "You can do this by adding the above command to your shell configuration file, "
+            "such as .bashrc or .zshrc, or by running it in your terminal before running the script."
+        )
+        if repo_path is None:
+            raise ValueError(
+                f"The HUGGINGFACE_REPO_PATH environment variable is not set. "
+                + help_message
+                )
+        elif not os.path.exists(repo_path):
+            raise ValueError(
+                f"The HUGGINGFACE_DIR_PATH={repo_path} environment variable is set to a non-existent directory. "
+                + help_message
+            )
+        return repo_path
+
+
 
     def valid_input(self, month, year):
         self.valid_month(month)
@@ -77,6 +100,7 @@ class SubmissionsDataset(PushshiftDataset):
 
     def dataset_url(self):
         return 'submissions'
+
 
 def month_to_str(month):
     return str(month).zfill(2)
