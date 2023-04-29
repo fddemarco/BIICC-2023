@@ -1,88 +1,74 @@
 import os
-from glob import glob
+import re
+import string
+
 import pandas as pd
+import requests
 
 
 class FileHandler:
-    def __init__(self, file):
-        change_wd(file)
-        self.pathname = file.pushshift_path()
-        self.url = file.url()
-        self.data_processor = file.data_processor()
+    def __init__(self, pushshift_dataset):
+        self.filename = pushshift_dataset.filename()
+        self.pathname = pushshift_dataset.pathname()
+        self.dir_pathname = pushshift_dataset.dir_pathname()
+        self.url = pushshift_dataset.url()
+
+        self.schema = pushshift_dataset.dataset_schema()
+        self.text_features = pushshift_dataset.text_features()
 
     def download(self):
-        if not self.downloaded():
-            os.system(f"wget -O {self.pathname + '.zst'} {self.url}")
+        with requests.get(self.url, stream=True) as r:
+            r.raise_for_status()
+            with open(self.pathname_of_compressed(), 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
 
-    def downloaded(self):
-        existing_files = glob(self.pathname + '*')
-        return any(existing_files)
+    def process(self):
+        filename = self.pathname_of_compressed()
+        i = 0
+        for i, df in enumerate(
+                pd.read_json(
+                    filename,
+                    compression={"method": "zstd", "max_window_size": 2 ** 31},
+                    lines=True,
+                    chunksize=10000, dtype=self.schema
+                )
+        ):
+            df = df[self.schema.keys()]
+            df = self.clean(df)
+            self.to_parquet(df)
 
-    def decompress(self):
-        if not self.decompressed():
-            compressed_file = self.compressed_format()
-            os.system(f'zstd -d --rm --long=31 {compressed_file}')
+    def to_parquet(self, df):
+        if os.path.exists(self.parquet_pathname()):
+            df.to_parquet(self.parquet_pathname(), engine="fastparquet", append=True, index=False)
+        else:
+            df.to_parquet(self.parquet_pathname(), engine="fastparquet", index=False)
 
-    def decompressed(self):
-        existing_files = glob(self.pathname + self.raw_format())
-        return any(existing_files)
+    def clean(self, df):
+        punctuation_str = re.escape(string.punctuation)
+        punctuation_regex = re.compile(f"([{punctuation_str}])")
+        whitespaces_regex = re.compile(r"\s+")
+        deleted_regex = re.compile(r'^\[(removed|deleted)]')
 
-    def format_path(self, suffix):
-        return self.pathname + suffix
+        for key in self.text_features:
+            df.loc[:, key] = (df[key].fillna('')
+                              .str.replace(deleted_regex, '', regex=True)
+                              .str.replace(punctuation_regex, r" \1 ", regex=True)
+                              .str.replace(whitespaces_regex, ' ', regex=True)
+                              .str.strip().str.lower())
+        df = df[df[self.text_features].ne('').any(axis=1)]
+        return df
 
-    def compressed_format(self):
-        return self.format_path(self.compressed_suffix())
+    def delete_compressed(self):
+        if os.path.exists(self.pathname_of_compressed()):
+            os.remove(self.pathname_of_compressed())
 
-    def raw_format(self):
-        return self.pathname
+    def parquet_pathname(self):
+        return os.path.join(self.dir_pathname, self.parquet_filename())
 
-    def small_format(self):
-        return self.format_path(self.small_suffix())
+    def parquet_filename(self):
+        return f"{self.filename}.parquet"
 
-    def parquet_format(self):
-        return self.format_path('.parquet')
+    def pathname_of_compressed(self):
+        return self.pathname + '.zst'
 
-    @staticmethod
-    def compressed_suffix():
-        return '.zst'
-
-    @staticmethod
-    def small_suffix():
-        return '_small.json'
-
-    def delete(self, suffix=''):
-        file = self.pathname + suffix
-        if os.path.exists(file):
-            os.remove(file)
-
-    def reduce_data(self):
-        self.data_processor.reduce_data()
-        self.delete()
-
-
-def change_wd(file):
-    actual_dir = file.build_local_path()
-    change_wd_to(actual_dir)
-
-
-def change_wd_to(folder_path):
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-    os.chdir(folder_path)
-
-
-def to_parquet(filename_pattern):
-    splits = glob(filename_pattern)
-    for file in splits:
-        json = pd.read_json(file, lines=True)
-        filename = file.rpartition('_')[0]
-        json.to_parquet(filename + '.parquet')
-        os.remove(file)
-
-
-def push_to_hub(filename_pattern):
-    files = glob(filename_pattern)
-    for file in files:
-        os.system(f"git add {file}")
-        os.system(f"git commit -m 'Uploaded file: {file}'")
-        os.system("git push")
