@@ -17,11 +17,16 @@ class FileHandler:
         self.text_features = pushshift_dataset.text_features()
 
     def download(self):
-        with requests.get(self.url, stream=True) as r:
+
+        headers = {'User-Agent': 
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
+        with requests.get(self.url, stream=True, headers=headers) as r:
             r.raise_for_status()
             with open(self.pathname_of_compressed(), 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
+
+
 
     def process(self):
         filename = self.pathname_of_compressed()
