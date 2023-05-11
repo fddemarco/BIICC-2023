@@ -66,7 +66,7 @@ class FasttextExperiment:
             raise Exception
 
     def save_embeddings_to_csv(self):
-        subreddits = [s for s in selected_subreddits()
+        subreddits = [s for s in waller_ranking_arxiv()
                       if self.subreddit_text_exists(s)]
         embeddings = self.embeddings_of(subreddits)
         tf_idf = pd.DataFrame(embeddings, index=subreddits, columns=range(0, 300))
@@ -147,29 +147,7 @@ class FasttextExperimentForSubmissions(FasttextExperiment):
 
 
 def get_waller_ranking_for(ranking):
-    waller_ranking = [
-        'democrats',
-        'EnoughLibertarianSpam',
-        'hillaryclinton',
-        'progressive',
-        'BlueMidterm2018',
-        'Enough_Sanders_Spam',
-        'badwomensanatomy',
-        'racism',
-        'GunsAreCool',
-        'Christians',
-        'The_Farage',
-        'new_right',
-        'conservatives',
-        'metacanada',
-        'NoFapChristians',
-        'TrueChristian',
-        'The_Donald',
-        'Conservative'
-    ]
-
-    waller_ranking = [s for s in waller_ranking if s in ranking]
-    return waller_ranking
+    return [s for s in waller_ranking_arxiv() if s in ranking]
 
 
 def bump_chart(elements, n, results_dir):
@@ -210,11 +188,30 @@ def bump_chart(elements, n, results_dir):
         bbox_inches='tight')
 
 
-def selected_subreddits():
-    return ['democrats', 'hillaryclinton', 'The_Donald', 'Conservative', 'Mr_Trump', 'BlueMidterm2018',
-            'EnoughHillHate', 'metacanada', 'TrueChristian', 'new_right',
-            'progressive', 'racism', 'GunsAreCool', 'Christians', 'The_Farage', 'NoFapChristians',
-            'Enough_Sanders_Spam', 'conservatives', 'Mr_Trump', 'EnoughLibertarianSpam', 'badwomensanatomy']
+def waller_ranking_arxiv():
+    return [
+        'democrats',
+        'EnoughLibertarianSpam',
+        'hillaryclinton',
+        'progressive',
+        'BlueMidterm2018',
+        'EnoughHillHate',
+        'Enough_Sanders_Spam',
+        'badwomensanatomy',
+        'racism',
+        'GunsAreCool',
+        'Christians',
+        'The_Farage',
+        'new_right',
+        'conservatives',
+        'metacanada',
+        'Mr_Trump',
+        'NoFapChristians',
+        'TrueChristian',
+        'The_Donald',
+        'Conservative'
+]
+
 
 
 
