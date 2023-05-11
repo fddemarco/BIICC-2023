@@ -109,7 +109,10 @@ class FasttextExperiment:
         return glob(self.subreddit_text_pathname('', '*'))
 
     def data_files_pathname(self):
-        return os.path.join(self.data_dir, f'{self.dataset()}_{self.year}-[0-9]*.parquet')
+        return os.path.join(self.data_dir, self.data_files_filename())
+
+    def data_files_filename(self):
+        raise NotImplementedError("This method should be implemented in a subclass")
 
     def subreddit_text_pathname(self, subreddit, suffix):
         return os.path.join(self.texts_dir, f'subreddit_{subreddit}' + suffix)
@@ -137,6 +140,9 @@ class FasttextExperimentForComments(FasttextExperiment):
     def texts_from(self, df):
         return df['body']
 
+    def data_files_filename(self):
+        return f'{self.dataset()}_{self.year}-[0-9]*.parquet'
+
 
 class FasttextExperimentForSubmissions(FasttextExperiment):
     def dataset(self):
@@ -144,6 +150,9 @@ class FasttextExperimentForSubmissions(FasttextExperiment):
 
     def texts_from(self, df):
         return df['title'] + ' ' + df['selftext']
+
+    def data_files_filename(self):
+        return f'{self.dataset()}_{self.year}-[0-9]*_[0-9]*.parquet'
 
 
 def get_waller_ranking_for(ranking):
