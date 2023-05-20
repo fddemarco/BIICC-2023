@@ -8,7 +8,7 @@ class GetData:
 
     def download_data(self):
         snapshot_download(
-            repo_id="fddemarco/pushshift-reddit",
+            repo_id=f"fddemarco/{self.huggingface_dataset()}",
             repo_type="dataset",
             allow_patterns=self.dataset_pattern(),
             local_dir=self.local_dir,
