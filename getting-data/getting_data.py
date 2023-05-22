@@ -2,9 +2,10 @@ from huggingface_hub import snapshot_download
 
 
 class GetData:
-    def __init__(self, year, local_dir=''):
+    def __init__(self, year, local_dir='.', cache_dir='.'):
         self.year = year
         self.local_dir = local_dir
+        self.cache_dir = cache_dir
 
     def download_data(self):
         snapshot_download(
@@ -12,7 +13,8 @@ class GetData:
             repo_type="dataset",
             allow_patterns=self.dataset_pattern(),
             local_dir=self.local_dir,
-            local_dir_use_symlinks=False)
+            cache_dir=self.cache_dir,
+            local_dir_use_symlinks=True)
 
     def huggingface_dataset(self):
         raise NotImplementedError("Should be implemented in a subclass")
