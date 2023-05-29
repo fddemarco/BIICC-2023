@@ -1,63 +1,68 @@
 import os
-from glob import glob
 import subprocess
 
-import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
-from datasets import load_dataset
+import pyarrow.dataset as ds
+import pandas as pd
+import pathlib
 import fasttext
 
 import dimension_generator as dg
-from append_files import AppendFiles
 
 
 class FasttextExperiment:
-    def __init__(self, year, data_dir, texts_dir, results_dir, fasttext_pathname):
-        self.year = year
-        self.data_dir = data_dir
-        self.texts_dir = texts_dir
-        self.results_dir = results_dir
-        self.fasttext_pathname = fasttext_pathname
+    def __init__(self, year, working_dir, fasttext_pathname):
+        self.year = str(year)
+        self.working_dir = pathlib.Path(working_dir)
+        self.fasttext_pathname = pathlib.Path(fasttext_pathname)
+
+    @property
+    def base_dataset_dir(self):
+        return self.working_dir / self.dataset_type / self.year
+
+    @property
+    def data_pathname(self):
+        return self.base_dataset_dir / 'data'
+
+    @property
+    def results_dir(self):
+        results_dir = self.base_dataset_dir / 'results'
+        if not results_dir.exists():
+            results_dir.mkdir(parents=True)
+        return results_dir
 
     def run_experiment(self):
-        self.generate_texts()
+        splits = self.generate_texts()
         self.run_fasttext()
-        self.save_embeddings_to_csv()
+        self.save_embeddings_to_csv(splits)
         self.compare_rankings()
 
     def generate_texts(self):
-        self.texts_by_subreddit()
-        self.texts_to_single_file()
+        dataset = ds.dataset(self.data_pathname, format="parquet")
+        splits = split_subreddits(dataset)
 
-    def write_to_file(self, df_chunk):
-        df = pd.DataFrame(df_chunk)
+        for split in splits:
+            grouped = self.texts_by_subreddit(dataset, ds.field("subreddit").isin(split))
+            text = grouped["text"].str.cat(sep="\n")
+            with open(self.subreddits_pathname, 'a') as f:
+                f.write(text + '\n')
+        return splits
+
+    def texts_by_subreddit(self, dataset, filter_condition):
+        dataset_split = dataset.filter(filter_condition)
+        df = dataset_split.to_table().to_pandas()
         df['text'] = self.texts_from(df)
         grouped = df.groupby('subreddit')['text'].apply(lambda x: ' '.join(x)).reset_index()
-        for idx, row in grouped.iterrows():
-            with open(self.subreddit_text_pathname(row['subreddit'], '.txt'), 'a') as f:
-                f.write(row['text'])
-        return df_chunk
+        return grouped
 
-    def texts_by_subreddit(self):
-        data = load_dataset(
-            'parquet',
-            data_files=self.data_files_pathname(),
-            split='train',
-            streaming=True
-        )
-        data_mapped = data.map(self.write_to_file, batched=True, batch_size=10000)
-        for data in data_mapped:
-            pass
-
-    def texts_to_single_file(self):
-        files = self.every_subreddit()
-        files.sort()
-        with AppendFiles(files, self.subreddits_pathname('.txt')) as append_files:
-            append_files.run()
+    @property
+    def subreddits_pathname(self):
+        return self.results_dir / 'subreddits.txt'
 
     def run_fasttext(self):
-        command = [self.fasttext_pathname, "skipgram", "-input", self.subreddits_pathname('.txt'),
-                   "-output", self.subreddits_pathname(''),
+        command = [self.fasttext_pathname, "skipgram", "-input", self.subreddits_pathname.absolute(),
+                   "-output", self.fasttext_output_pathname,
                    "-epoch", "1", "-dim", "300", "-thread", "8"]
         result = subprocess.run(command)
         if result.returncode != 0:
@@ -65,21 +70,34 @@ class FasttextExperiment:
             print(result.stderr)
             raise Exception
 
-    def save_embeddings_to_csv(self):
-        subreddits = [s for s in waller_ranking_arxiv()
-                      if self.subreddit_text_exists(s)]
+    @property
+    def fasttext_output_pathname(self):
+        return self.results_dir / 'subreddits'
+
+    @property
+    def fasttext_model_pathname(self):
+        return self.results_dir / 'subreddits.bin'
+
+    def save_embeddings_to_csv(self, splits):
+        used_subreddits = np.concatenate(splits)
+        subreddits = np.intersect1d(waller_ranking_arxiv(), used_subreddits)
+        subreddits = list(subreddits)
+
         embeddings = self.embeddings_of(subreddits)
         tf_idf = pd.DataFrame(embeddings, index=subreddits, columns=range(0, 300))
         tf_idf.to_csv(self.embedding_pathname())
 
+    def embedding_pathname(self):
+        return self.results_dir / 'embeddings.csv'
+
     def embeddings_of(self, subreddits):
-        model_pathname = self.subreddits_pathname('.bin')
+        model_pathname = str(self.fasttext_model_pathname.absolute())
         model = fasttext.load_model(model_pathname)
         embeddings = []
+        dataset = ds.dataset(self.data_pathname, format="parquet")
         for s in subreddits:
-            pathname = self.subreddit_text_pathname(s, '.txt')
-            with open(pathname, 'r') as f:  # TODO: Si el subreddit es muy grande, puede fallar
-                text = f.read()
+            df = self.texts_by_subreddit(dataset, ds.field("subreddit") == s)
+            text = df["text"].str.cat(sep=' ')  # TODO: REVISAR
             embeddings.append(model.get_sentence_vector(text).astype(float))
         return embeddings
 
@@ -102,57 +120,30 @@ class FasttextExperiment:
         fasttext_ranking = [x for x in scores.sort_values('dem_rep').index]
         return fasttext_ranking
 
-    def subreddit_text_exists(self, s):
-        return os.path.exists(self.subreddit_text_pathname(s, '.txt'))
-
-    def every_subreddit(self):
-        return glob(self.subreddit_text_pathname('', '*'))
-
-    def data_files_pathname(self):
-        return os.path.join(self.data_dir, self.data_files_filename())
-
-    def data_files_filename(self):
-        raise NotImplementedError("This method should be implemented in a subclass")
-
-    def subreddit_text_pathname(self, subreddit, suffix):
-        return os.path.join(self.texts_dir, f'subreddit_{subreddit}' + suffix)
-
-    def subreddits_filename(self, extension):
-        return f'subreddits_{self.year}' + extension
-
-    def subreddits_pathname(self, extension):
-        return os.path.join(self.results_dir, self.subreddits_filename(extension))
-
-    def embedding_pathname(self):
-        return os.path.join(self.results_dir, f'embeddings.csv')
-
-    def dataset(self):
-        raise NotImplementedError("This method should be implemented in a subclass.")
+    @property
+    def dataset_type(self):
+        raise NotImplementedError("Should be implemented in a subclass.")
 
     def texts_from(self, df):
         raise NotImplementedError("This method should be implemented in a subclass.")
 
 
 class FasttextExperimentForComments(FasttextExperiment):
-    def dataset(self):
-        return 'RC'
-
     def texts_from(self, df):
         return df['body']
 
-    def data_files_filename(self):
-        return f'{self.dataset()}_{self.year}-[0-9]*.parquet'
+    @property
+    def dataset_type(self):
+        return 'pushshift-reddit-comments'
 
 
 class FasttextExperimentForSubmissions(FasttextExperiment):
-    def dataset(self):
-        return 'RS'
-
     def texts_from(self, df):
         return df['title'] + ' ' + df['selftext']
 
-    def data_files_filename(self):
-        return f'{self.dataset()}_{self.year}-[0-9]*_[0-9]*.parquet'
+    @property
+    def dataset_type(self):
+        return 'pushshift-reddit'
 
 
 def get_waller_ranking_for(ranking):
@@ -219,8 +210,43 @@ def waller_ranking_arxiv():
         'TrueChristian',
         'The_Donald',
         'Conservative'
-]
+    ]
 
 
+def get_most_popular_subreddits(dataset):
+    """
+    Returns top 10k subreddits with more posts, sorted in ascending order.
+    """
+    subreddits = (
+        dataset
+        .to_table(columns=["subreddit"])
+        .column("subreddit")
+        .to_pandas()
+        .value_counts()
+        .sort_values(ascending=True)[-10000:]
+    )
+    return subreddits
 
 
+def partition_threshold(subreddits):
+    return int(subreddits.sum()) // 100
+
+
+def split_subreddits(dataset):  # Subset sum
+    splits = []
+    current_split = []
+    current_cum_count = 0
+    subreddits = get_most_popular_subreddits(dataset)
+    threshold = partition_threshold(subreddits)
+    for s, s_count in subreddits.items():
+        if threshold < current_cum_count + s_count:
+            splits.append(current_split)
+            current_cum_count = 0
+            current_split = []
+        current_cum_count += s_count
+        current_split.append(s)
+
+    if current_split:
+        splits.append(current_split)
+
+    return splits
