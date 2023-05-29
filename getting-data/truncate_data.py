@@ -7,12 +7,7 @@ import pyarrow as pa
 
 def get_most_popular_subreddits(dataset):
     """
-    Esto funciona porque no son tantos submissions
-    y los subreddits tienen nombres relativamente cortos.
-    (Entran en memoria).
-
-    Devuelve los 10 mil subreddits con más posts, ordenados de menor a mayor.
-
+    Returns top 10k subreddits with more posts, sorted in ascending order.
     """
     subreddits = (
         dataset

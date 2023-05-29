@@ -36,6 +36,10 @@ class RedditPostsDataset:
         return self.data_dir / self.huggingface_dataset / self.year
 
     @property
+    def dataset_pathname(self):
+        return self.hf_dataset_dir / 'data'
+
+    @property
     def huggingface_dataset(self):
         raise NotImplementedError("Should be implemented in a subclass")
 
