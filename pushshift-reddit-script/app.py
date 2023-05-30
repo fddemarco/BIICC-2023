@@ -33,7 +33,7 @@ from dataset import Comments
               default=False
               )
 def app(posts_type: str,
-        year: str,
+        year: int,
         working_dir: str,
         download: bool,
         clean: bool
