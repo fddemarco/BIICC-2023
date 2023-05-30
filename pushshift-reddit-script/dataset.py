@@ -69,9 +69,9 @@ class PushshiftRedditPostsDataset:
             self.clean_dir.mkdir(parents=True)
 
     def clean_monthly_dataset(self, month):
-        dataset = ds.dataset(self.hf_pathname(month), format="parquet", schema=self.schema)
+        data = ds.dataset(self.hf_pathname(month), format="parquet", schema=self.schema)
         with pq.ParquetWriter(self.clean_pathname(month), self.schema, version="2.6") as writer:
-            for batch in dataset.to_batches(columns=self.schema.names):
+            for batch in data.to_batches(columns=self.schema.names):
                 df = self.clean_batch(batch.to_pandas())
                 table = pa.Table.from_pandas(df, schema=self.schema)
                 writer.write_table(table)
@@ -81,7 +81,7 @@ class PushshiftRedditPostsDataset:
         return [str(i).zfill(2) for i in range(1, 12 + 1)]
 
     def hf_pathname(self, month):
-        return self.hf_data_dir / f'RS_{self.year}-{month}.parquet'
+        return self.hf_data_dir / 'data' / f'RS_{self.year}-{month}.parquet'
 
     def data_dir(self, base_folder):
         return self.working_dir / base_folder / self.huggingface_dataset / self.year
