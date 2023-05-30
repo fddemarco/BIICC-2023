@@ -68,6 +68,20 @@ class PushshiftRedditPostsDataset:
         if not self.clean_dir.exists():
             self.clean_dir.mkdir(parents=True)
 
+    def clean_monthly_json_dataset(self, month):
+        with pd.read_json(
+                self.hf_pathname(month),
+                lines=True,
+                chunksize=100000,
+                dtype=self.schema,
+                dtype_backend="pyarrow") as reader:
+            with pq.ParquetWriter(self.clean_pathname(month), self.schema, version="2.6") as writer:
+                for chunk in reader:
+                    chunk = chunk[self.schema.names].copy()
+                    df = self.clean_batch(chunk)
+                    table = pa.Table.from_pandas(df, schema=self.schema)
+                    writer.write_table(table)
+
     def clean_monthly_dataset(self, month):
         data = ds.dataset(self.hf_pathname(month), format="parquet", schema=self.schema)
         with pq.ParquetWriter(self.clean_pathname(month), self.schema, version="2.6") as writer:
