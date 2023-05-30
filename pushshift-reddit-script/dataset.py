@@ -5,6 +5,7 @@ import pathlib
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 import pyarrow as pa
+import pandas as pd
 
 
 class PushshiftRedditPostsDataset:
@@ -97,7 +98,7 @@ class PushshiftRedditPostsDataset:
         return self.data_dir('data_clean')
 
     def clean_batch(self, df):
-        regex = re.compile(r"\[[^)]*]|(@\[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+://\S+)|^rt|http.+?")
+        regex = r"\[[^)]*]|(@\[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+://\S+)|^rt|http.+?"
 
         for key in self.text_features:
             df.loc[:, key] = (df[key].fillna('')
