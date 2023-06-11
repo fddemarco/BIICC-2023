@@ -1,5 +1,4 @@
 import os
-import subprocess
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,10 +11,10 @@ import dimension_generator as dg
 
 
 class FasttextExperiment:
-    def __init__(self, year, working_dir, fasttext_pathname):
+    def __init__(self, year, working_dir, results_dir='results'):
         self.year = str(year)
         self.working_dir = pathlib.Path(working_dir)
-        self.fasttext_pathname = pathlib.Path(fasttext_pathname)
+        self.results_folder = results_dir
 
     @property
     def base_dataset_dir(self):
@@ -27,16 +26,10 @@ class FasttextExperiment:
 
     @property
     def results_dir(self):
-        results_dir = self.base_dataset_dir / 'results'
+        results_dir = self.base_dataset_dir / self.results_folder
         if not results_dir.exists():
             results_dir.mkdir(parents=True)
         return results_dir
-
-    def run_experiment(self):
-        splits = self.generate_texts()
-        self.run_fasttext()
-        self.save_embeddings_to_csv(splits)
-        self.compare_rankings()
 
     def generate_texts(self):
         dataset = ds.dataset(self.data_pathname, format="parquet")
@@ -52,23 +45,19 @@ class FasttextExperiment:
     def texts_by_subreddit(self, dataset, filter_condition):
         dataset_split = dataset.filter(filter_condition)
         df = dataset_split.to_table().to_pandas()
-        df['text'] = self.texts_from(df)
+        return self.texts_by_subreddit_df(df)
+
+    def texts_by_subreddit_df(self, df):
+        self.add_text_column(df)
         grouped = df.groupby('subreddit')['text'].apply(lambda x: ' '.join(x)).reset_index()
         return grouped
+
+    def add_text_column(self, df):
+        df['text'] = self.texts_from(df)
 
     @property
     def subreddits_pathname(self):
         return self.results_dir / 'subreddits.txt'
-
-    def run_fasttext(self):
-        command = [self.fasttext_pathname, "skipgram", "-input", self.subreddits_pathname.absolute(),
-                   "-output", self.fasttext_output_pathname,
-                   "-epoch", "1", "-dim", "300", "-thread", "8"]
-        result = subprocess.run(command)
-        if result.returncode != 0:
-            print("Command failed with error:")
-            print(result.stderr)
-            raise Exception
 
     @property
     def fasttext_output_pathname(self):
@@ -78,14 +67,20 @@ class FasttextExperiment:
     def fasttext_model_pathname(self):
         return self.results_dir / 'subreddits.bin'
 
-    def save_embeddings_to_csv(self, splits):
-        used_subreddits = np.concatenate(splits)
-        subreddits = np.intersect1d(waller_ranking_arxiv(), used_subreddits)
+    def get_most_popular_subreddits(self):
+        dataset = ds.dataset(self.data_pathname, format="parquet")
+        subreddits = get_most_popular_subreddits(dataset)
+        return subreddits.index
+
+    def save_embeddings_to_csv(self):
+        subreddits = self.get_most_popular_subreddits()
+        subreddits = np.intersect1d(waller_ranking_arxiv(), subreddits)
         subreddits = list(subreddits)
 
         embeddings = self.embeddings_of(subreddits)
         tf_idf = pd.DataFrame(embeddings, index=subreddits, columns=range(0, 300))
         tf_idf.to_csv(self.embedding_pathname())
+        return tf_idf
 
     def embedding_pathname(self):
         return self.results_dir / 'embeddings.csv'
@@ -95,14 +90,15 @@ class FasttextExperiment:
         model = fasttext.load_model(model_pathname)
         embeddings = []
         dataset = ds.dataset(self.data_pathname, format="parquet")
+        df = self.texts_by_subreddit(dataset, ds.field("subreddit").isin(subreddits))
         for s in subreddits:
-            df = self.texts_by_subreddit(dataset, ds.field("subreddit") == s)
-            text = df["text"].str.cat(sep=' ')  # TODO: REVISAR
+            df_f = df[df["subreddit"] == s].copy()
+            text = df_f["text"].str.cat(sep=' ')  # TODO: REVISAR
             embeddings.append(model.get_sentence_vector(text).astype(float))
         return embeddings
 
     def compare_rankings(self):
-        fasttext_ranking = self.get_fasttext_ranking()
+        fasttext_ranking = list(pd.read_csv(self.embedding_pathname(), index_col=0).index)
         waller_ranking = get_waller_ranking_for(fasttext_ranking)
         rankings = [
             {
@@ -181,9 +177,8 @@ def bump_chart(elements, n, results_dir):
     for spine in ax.spines.values():
         spine.set_visible(False)
     plt.tight_layout()
-    plt.savefig(os.path.join(
-        results_dir,
-        f'rankings_comparison.png'),
+    plt.savefig(
+        results_dir / f'rankings_comparison.png',
         dpi=300,
         bbox_inches='tight')
 
