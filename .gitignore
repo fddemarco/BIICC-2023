@@ -1,8 +1,9 @@
-*/.idea/
 .idea/
+*/.idea/
+*/*/.idea/
+__pycache__/
 */__pycache__/
+*/*/__pycache__/
 .ipynb_checkpoints/
-*/paths/*
-*/tests/*
-*/dimen_generation
-*/prototipos/*
+*/.ipynb_checkpoints/
+*/*/.ipynb_checkpoints/
