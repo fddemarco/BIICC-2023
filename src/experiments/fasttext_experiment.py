@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pyarrow.dataset as ds
@@ -7,11 +5,11 @@ import pandas as pd
 import pathlib
 import fasttext
 
-import dimension_generator as dg
+import src.experiments.dimension_generator as dg
 
 
 class FasttextExperiment:
-    def __init__(self, year, working_dir, results_dir='results'):
+    def __init__(self, year, working_dir, results_dir):
         self.year = str(year)
         self.working_dir = pathlib.Path(working_dir)
         self.results_folder = results_dir
@@ -110,11 +108,15 @@ class FasttextExperiment:
         bump_chart(rankings, len(waller_ranking), self.results_dir)
 
     def get_fasttext_ranking(self):
+        scores = self.get_fasttext_scores()
+        fasttext_ranking = [x for x in scores.sort_values('dem_rep').index]
+        return fasttext_ranking
+
+    def get_fasttext_scores(self):
         df = pd.read_csv(self.embedding_pathname(), index_col=0)
         dimensions = dg.DimensionGenerator(df).generate_dimensions_from_seeds([("democrats", "Conservative")])
         scores = dg.score_embedding(df, zip(["dem_rep"], dimensions))
-        fasttext_ranking = [x for x in scores.sort_values('dem_rep').index]
-        return fasttext_ranking
+        return scores
 
     @property
     def dataset_type(self):

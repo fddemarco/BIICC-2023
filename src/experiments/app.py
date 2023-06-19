@@ -1,10 +1,5 @@
 import click
 
-import pathlib
-
-import pyarrow.dataset as ds
-from fasttext_experiment import split_subreddits
-
 from fasttext_experiment import FasttextExperimentForSubmissions
 from fasttext_experiment import FasttextExperimentForComments
 
