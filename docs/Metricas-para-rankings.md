@@ -1,34 +1,24 @@
-# TO DO
+# Metricas
+
+## TO DO LIST
+
 * Capítulo 8.3.2.3 de Francesco Ricci, Lior Rokach, Bracha Shapira (eds.) - Recommender Systems Handbook-Springer US (2015)
-    * Normalized Distance based Performance Measure (NDPM).
-    * Average Precision
-    * Spearman
-    * Kendall
-    * Normalized Discounted Cumulative Gain (NDCG)
-    * Mean Average Precision (MAP)
-    * Mean Reciprocal Rank (MRR)
-    * Fraction of Concordant Pairs (FCP).
-* https://stats.stackexchange.com/questions/159657/metrics-for-evaluating-ranking-algorithms
-* https://towardsdatascience.com/20-popular-machine-learning-metrics-part-2-ranking-statistical-metrics-22c3e5a937b6
-* https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)
-* https://towardsdatascience.com/how-to-objectively-compare-two-ranked-lists-in-python-b3d74e236f6a
-    * Rank-biased overlap. https://dl.acm.org/doi/10.1145/1852102.1852106 (Section 4.*)
-    * Kendall Tau. https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient
-    * Pearson's Correlation. https://en.wikipedia.org/wiki/Pearson_correlation_coefficient
+  * Spearman
+  * Kendall
+  * Normalized Discounted Cumulative Gain (NDCG)
+* <https://stats.stackexchange.com/questions/159657/metrics-for-evaluating-ranking-algorithms>
+* <https://towardsdatascience.com/20-popular-machine-learning-metrics-part-2-ranking-statistical-metrics-22c3e5a937b6>
+* <https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)>
+* <https://towardsdatascience.com/how-to-objectively-compare-two-ranked-lists-in-python-b3d74e236f6a?>
+  * Rank-biased overlap. <https://dl.acm.org/doi/10.1145/1852102.1852106> (Section 4.*)
+  * Kendall Tau. <https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient>
+  * Pearson's Correlation. <https://en.wikipedia.org/wiki/Pearson_correlation_coefficient>
 
-# Métricas para rankings:
-Evaluation measures for an information retrieval (IR) system assess how well an index, search engine or database returns results from a collection of resources that satisfy a user's query. They are therefore fundamental to the success of information systems and digital platforms. The success of an IR system may be judged by a range of criteria including relevance, speed, user satisfaction, usability, efficiency and reliability. However, the most important factor in determining a system's effectiveness for users is the overall relevance of results retrieved in response to a query. Evaluation measures may be categorised in various ways including offline or online, user-based or system-based and include methods such as observed user behaviour, test collections, precision and recall, and scores from prepared benchmark test sets.
+## Métricas para rankings
 
-## Mean reciprocal rank
-The mean reciprocal rank is a statistic measure for evaluating any process that produces a list of possible responses to a sample of queries, ordered by probability of correctness. The reciprocal rank of a query response is the multiplicative inverse of the rank of the first correct answer: 1 for first place, 1⁄2 for second place, 1⁄3 for third place and so on. If none of the proposed results are correct, reciprocal rank is 0. The mean reciprocal rank is the average of the reciprocal ranks of results for a sample of queries Q:
+Las medidas de evaluación para un sistema de recuperación de información (IR, por sus siglas en inglés) evalúan qué tan bien un índice, motor de búsqueda o base de datos devuelve resultados de una colección de recursos que satisfacen la consulta de un usuario. Por lo tanto, son fundamentales para el éxito de los sistemas de información y plataformas digitales. El éxito de un sistema de IR puede ser juzgado por una serie de criterios, incluyendo la relevancia, la velocidad, la satisfacción del usuario, la usabilidad, la eficiencia y la confiabilidad. Sin embargo, el factor más importante para determinar la eficacia de un sistema para los usuarios es la relevancia general de los resultados recuperados en respuesta a una consulta. Las medidas de evaluación pueden ser categorizadas de varias formas, incluyendo offline o en línea, basadas en el usuario o en el sistema, e incluyen métodos como el comportamiento observado del usuario, colecciones de pruebas, precisión y recuperación, y puntuaciones de conjuntos de pruebas de referencia preparados.
 
-$$ \text{MRR} = \frac{1}{|Q|}\sum_{i=1}^{|Q|}{\frac{1}{rank_i}}. $$
-
-
-where *rank_i* refers to the rank position of the first relevant document for the i-th query.
-
-* Fuente: ???
-* https://medium.com/nerd-for-tech/evaluating-recommender-systems-590a7b87afa5
+* <https://medium.com/nerd-for-tech/evaluating-recommender-systems-590a7b87afa5>
 
 ## Recommender Systems
 
@@ -37,24 +27,28 @@ Supose we want to measure the effectiveness of a recommendation system. It assig
 Precision and recall are binary metrics used to evaluate models with binary output (True/False). To measure the quality of our recommendation system, we will first translate our problem to a binary decision problem. To do the translation, we will assume that any *true rating* above 3.5 corresponds to a **relevant item**, and any *true rating* below 3.5 is **irrelevant**. Then, we can say that a *relevant item* for a specific user-item pair is a good recommendation for the user in question. Conversely, an *irrelevant item* would not be a good recommendation for the user.
 
 In summary,
+
 **Relevant** items are already known in the data set
-* Relevant item: Has a True/Actual rating >= 3.5 (
+
+* Relevant item: Has a True/Actual rating >= 3.5
 * Irrelevant item: Has a True/Actual rating < 3.5
 
 **Recommended** items are generated by recommendation algorithm
+
 * Recommended item: has a predicted rating >= 3.5
 * Not recommended item: Has a predicted rating < 3.5
-
 
 ### Precision and Recall
 
 Terminology.
+
 * **with condition**. It's the number of all possible relevant items for a user.
 * **predicted positive**. It's the number of items we recommended.
 * **correct positives**. It's the number of our recommendations that are actually relevant.
 
-* Precision: P = $ \frac{\text{# correct positive}}{\text{# predicted positive}}$ = 1 - false positive rate
-* Recall: R = $ \frac{\text{# correct positive}}{\text{# with condition}}$ = 1 - false negative rate
+* Precision: P = $ \frac{\text{\# correct positive}}{\text{\# predicted positive}}$ = 1 - false positive rate
+
+* Recall: R = $ \frac{\text{\# correct positive}}{\text{\# with condition}}$ = 1 - false negative rate
 
 ### Precision at k (P@k)
 
@@ -66,11 +60,11 @@ Precision at k is the proportion of *recommended items* in the top-k set that ar
 
 Precision@k = (# of *recommended* items @k that are **relevant**) / (# of *recommended* items @k)
 
-Fixme: Fuente: https://medium.com/@m_n_malaeb/recall-and-precision-at-k-for-recommender-systems-618483226c54
+Fuente: <https://medium.com/@m_n_malaeb/recall-and-precision-at-k-for-recommender-systems-618483226c54>
 
-For modern (web-scale) information retrieval, recall is no longer a meaningful metric, as many queries have thousands of relevant documents, and few users will be interested in reading all of them. Precision at k documents (P@k) is still a useful metric (e.g., P@10 or "Precision at 10" corresponds to the number of relevant results among the top 10 retrieved documents), but fails to take into account the positions of the relevant documents among the top k.[13] Another shortcoming is that on a query with fewer relevant results than k, even a perfect system will have a score less than 1.[14] It is easier to score manually since only the top k results need to be examined to determine if they are relevant or not.
+For modern (web-scale) information retrieval, recall is no longer a meaningful metric, as many queries have thousands of relevant documents, and few users will be interested in reading all of them. Precision at k documents (P@k) is still a useful metric (e.g., P@10 or "Precision at 10" corresponds to the number of relevant results among the top 10 retrieved documents), but fails to take into account the positions of the relevant documents among the top k.[13]
 
-Fixme: fuente: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Precision_at_k
+Fuente: <https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Precision_at_k>
 
 ### Average Precision
 
@@ -85,30 +79,11 @@ $$
 }
 $$
 where
+
 * N = # of recommended items
 * M = # of all relevant items
 
 Notice it is larger when there have been more successes in front of it - that's because the precision of the kth subset is higher the more correct guesses you've had up to point k. Thus, AP rewards you for front-loading the recommendations that are most likely to be correct.
-
-### Average Recall
-
-???
-
-### Mean Average Precision
-
-Average Precision applies to a single user. To measure the overall performance, we can average the AP@N metric over all |U| users. This metric is called Mean Average Precision.
-
-$$ \text{MAP} = \frac{1}{|U|} \sum_{u \in U}{AP_u}.$$
-
-http://sdsawtelle.github.io/blog/output/mean-average-precision-MAP-for-recommender-systems.html#Precision-and-Recall-of-Recommender-Systems
- 
-Fixme: si llego a usar esta métrica, en la sección "Examples and Intuition for AP" de esta página que pongo al final, hay buenas ejemplos para entender esta métrica: http://sdsawtelle.github.io/blog/output/mean-average-precision-MAP-for-recommender-systems.html#Precision-and-Recall-of-Recommender-Systems
-
-Nota: Acá estamos promediando el AP de los usuarios. En realidad, se debería promediar las queries. Estamos asumiendo que cada usuario consume una única query.
-
-### mean Average Recall
-
-???
 
 ## Average value of F1@k
 
@@ -117,26 +92,11 @@ F1-score (alternatively, F1-Measure), is a mixed metric that takes into account 
 Similarly to Precision@k and Recall@k is a rank-based metric that can be summarized as follows: "What F1-score do I get if I only consider the top k predictions my model outputs?"
 
 $$ F_1@k = 2\frac{P(k) \cdot R(k)}{P(k) + R(k)}$$
-Fuente: https://queirozf.com/entries/evaluation-metrics-for-ranking-problems-introduction-and-examples#f1-k
 
-## Top-k accuracy
-Top-n accuracy is a metric for classification.
+Fuente:
+<https://queirozf.com/entries/evaluation-metrics-for-ranking-problems-introduction-and-examples#f1-k>
 
-$$\text{top-k-accuracy} = \frac{1}{|U|}\sum_{u \in U}{
-\begin{cases}
-1 & \text{if at least one of k recommendations is relevant} \\
-0 & \text{otherwise.}
-\end{cases}
-}$$
-
-I like this very much because it is so easy to interpret. k comes from a business requirement (probably k∈[5,20]), then you can say how often the users will be happy.
-
-Downside of this: If you still care about the order within the k items, you have to find another metric.
-
-Fuente: https://stats.stackexchange.com/questions/159657/metrics-for-evaluating-ranking-algorithms
-
-
-## CG (Cumulative Gain):
+## CG (Cumulative Gain)
 
 Cumulative Gain (CG) is the sum of the graded relevance values of all results in a search result list. The CG at a particular rank position $p$ is defined as:
 
@@ -145,19 +105,20 @@ where $rel_i$ is the graded relevance of the recommendation at position $i$. If 
 
 Note that the value computed with the CG function is unaffected by changes in the ordering of search results. That is, moving a highly relevant item upfront does not change the computed value for CG.
 
-## DCG: (Discounted Cumulative Gain): 
+## DCG: (Discounted Cumulative Gain)
 
 Three assumptions are made in using DCG and its related measures.
+
 * Highly relevant documents are more useful when appearing earlier in a search engine result list (have higher ranks)
 * Highly relevant documents are more useful than marginally relevant documents, which are in turn more useful than non-relevant documents.
 * The user is expected to read a relatively large portion of the list.
-
 
 Using a graded relevance scale of documents in a search-engine result set, DCG measures the usefulness, or gain, of a document based on its position in the result list. The gain is accumulated from the top of the result list to the bottom, with the gain of each result discounted at lower ranks.
 
 In the following, $rel_i$ is the graded relevance of the result at position $i$.
 
-Como mi sistema no tiene relevance score para las contranarrativas, hay que fijarles un valor constante (se puede fijar valor 1) (Here we assume that the relevance score of each document to a query is given (otherwise it is usually set to a constant value), esto lo dice acá: https://towardsdatascience.com/20-popular-machine-learning-metrics-part-2-ranking-statistical-metrics-22c3e5a937b6).
+Como mi sistema no tiene relevance score para las contranarrativas, hay que fijarles un valor constante (se puede fijar valor 1) (Here we assume that the relevance score of each document to a query is given (otherwise it is usually set to a constant value), esto lo dice acá:
+<https://towardsdatascience.com/20-popular-machine-learning-metrics-part-2-ranking-statistical-metrics-22c3e5a937b6)>.
 
 The traditional formula of DCG accumulated at a particular rank position p is defined as:
 
@@ -165,7 +126,7 @@ $$ \text{DCG}_p = \sum_{i=1}^{p}{\frac{rel_i}{log_2(i+1)}}. $$
 
 The premise of DCG is that highly relevant documents appearing lower in a search result list should be penalized as the graded relevance value is reduced logarithmically proportional to the position of the result.
 
-Previously there was no theoretically sound justification for using a logarithmic reduction factor[2] other than the fact that it produces a smooth reduction. But Wang et al. (2013)[3] gave theoretical guarantee for using the logarithmic reduction factor in Normalized DCG (NDCG). The authors show that for every pair of substantially different ranking functions, the NDCG can decide which one is better in a consistent manner.
+Previously there was no theoretically sound justification for using a logarithmic reduction factor[2] other than the fact that it produces a smooth reduction. But Wang et al. (2013) gave theoretical guarantee for using the logarithmic reduction factor in Normalized DCG (NDCG). The authors show that for every pair of substantially different ranking functions, the NDCG can decide which one is better in a consistent manner.
 
 An alternative formulation of DCG[4] places stronger emphasis on recommending relevant items:
 
@@ -189,7 +150,7 @@ where $REL_k$ represents the list of relevant items (ordered by their relevance)
 
 The nDCG values for all queries can be averaged to obtain a measure of the average performance of a search engine's ranking algorithm. 
 
-Fuente: https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+Fuente: <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>
 
 * Normalized DCG metric does not penalize for bad documents in the result.
 * Normalized DCG does not penalize for missing documents in the result.
@@ -281,73 +242,21 @@ Extrapolation assumes that the degree of agreement seen at k is expected to cont
 
 Since RBO measures similarity, not distance, it is not a metric. However, RBO can be trivially turned into a distance measure, rank-biased distance (RBD), by RBD = 1 − RBO. In this context, *metric* is a symmetric measure where the triangle inequality holds.
 
-Fuentes: 
-* RBO. https://towardsdatascience.com/how-to-objectively-compare-two-ranked-lists-in-python-b3d74e236f6a
-* Serie geométrica. https://es.wikipedia.org/wiki/Progresi%C3%B3n_geom%C3%A9trica
-* Serie de Taylor. https://es.wikipedia.org/wiki/Serie_de_Taylor#Logaritmo_natural
-* Paper original de RBO. https://dl.acm.org/doi/10.1145/1852102.1852106 (Section 4.*)
+Fuentes
+
+* RBO. <https://towardsdatascience.com/how-to-objectively-compare-two-ranked-lists-in-python-b3d74e236f6a>
+* Serie geométrica. <https://es.wikipedia.org/wiki/Progresi%C3%B3n_geom%C3%A9trica>
+* Serie de Taylor. <https://es.wikipedia.org/wiki/Serie_de_Taylor#Logaritmo_natural>
+* Paper original de RBO. <https://dl.acm.org/doi/10.1145/1852102.1852106> (Section 4.*)
 
 ## Using a Reference Ranking
-### Normalized Distance based Performance Measure (NDPM)
 
-The Normalized Distance based Performance Measure (NDPM) is commonly used in information retrival. It differentiates between correct orders of paris, incorrect orders and ties. 
+### Fraction of Concordan Pairs (FCP) - Kendall tau
 
-Let $\delta(i_1, i_2)$ be a distance function between a reference ranking $<_1$ and a proposed ranking $<_2$ defined as follows:
-
-$$ \delta(i_1, i_2) = 
-\begin{cases}
-0 & \text{if } <_1 \text{ and } <_2 \text{ agree}.\\
-1 & \text{if } <_1 \text{ and } <_2 \text{ are compatible}.\\
-2 & \text{if } <_1 \text{ and } <_2 \text{ disagree}.
-\end{cases}
-$$
-
-We define an agreement relation between the orderds $<_1$ and $<_2$ with respect to a pair of items as follows:
-* $<_1$ and $<_2$ agree on $i_1$ and $i_2$ if $i_1 >_1 i_2$ and $i_1 >_2 i_2$.
-* $<_1$ and $<_2$ disagree on $i_1$ and $i_2$ if $i_1 >_1 i_2$ and $i_1 <_2 i_2$.
-* $<_1$ and $<_2$ are compatible on $i_1$ and $i_2$ if $i_1 >_1 i_2$ and $<_1$, $<_2$ do not agree nor disagree. That is, the items are tied or incomparable under at least one of the (partial) orders.
-
-The total distance over all item pairs is:
-$$ \Delta(<_1, <_2) = \sum_{i_1, i_2}{\delta(i_1,i_2)} $$
-
-Let $m(<_1) = argmax_{r} \Delta(<_1, r)$ be a normalization factor which is the maximal distance that any ranking $r$ can have from a reference ranking $<_1$. Then, the NDPM score for comparing a proposed ranking $<_2$ to a reference ranking $<_1$ is
-$$ \text{NDPM}(<_1, <_2) = \frac{\Delta(<_1,<_2)}{m(<_1)}$$
-
-Intuitively, the NDPM measure will give a perfect score of 0 to rankings that completely agree with the reference ranking, and the worst score of 1 to a ranking that completely disagress with the reference ranking.
-
-A potential downside of NDPM in some applications is that it does not consider the location of disagreements in the reference ranking.
-
-### Fraction of Concordan Pairs (FCP)
-
-The Fraction of Concordant Pairs (FCP) is a metric used to evaluate the performance of ranking algorithms. It is often used in information retrieval and is a measure of the agreement between the orderings produced by two rankers for the same set of items.
+The Fraction of Concordant Pairs (FCP) is a metric used t evaluate the performance of ranking algorithms. It is often used in information retrieval and is a measure of the agreement between the orderings produced by two rankers for the same set of items.
 
 The FCP metric is based on pairs of items and their corresponding rankings. Given two rankings, the first step is to consider all possible pairs of items that appear in both rankings. For each such pair, we determine whether the relative order of the two items is the same in both rankings (i.e., they are concordant) or whether their order is different (i.e., they are discordant).
 
 The FCP is then calculated as the fraction of pairs that are concordant, or equivalently, the fraction of pairs for which the order is the same in both rankings. A perfect agreement between the two rankings would result in an FCP value of 1, whereas a completely random ranking would result in an FCP value of 0.5. An FCP value less than 0.5 indicates that the two rankings are more different than would be expected by chance.
 
 The FCP metric is a useful tool for evaluating the agreement between different rankers, and it is often used in applications where it is important to have a consensus ranking.
-
-## Utility-Based Ranking
-
-One popular alternative is to order items by decreasing utility. In such cases, we not only care about whether items $i_1$ and $i_2$ were ordered incorrectly, but also about the difference in utility between $i_1$ and $i_2$ . It is not as bad to incorrectly order a pair of items with similar utilities, as to incorrectly order items with very different utilities.
-
-It is also common to assume that the utility of a list of recommendations is additive, given by the sum of the utilities of the individual recommendations. The utility of each recommendation is the utility of the recommended item discounted by a factor that depends on its position in the list of recommendations.
-
-### R-Score
-
-In many applications, the user can use only a single or a very small set of items. In such cases, we can expect the users to observe only a few items of the top of the recommendations lists.
-
-The R-Score metric assumes that the value of recommendations decile exponentially down the ranked list to yield the following score for each user $u$:
-
-$$ R_u = \sum_j \frac{\max(r_{u_j, i_j} - d, 0)}{2^{\frac{j-1}{\alpha - 1}}} $$
-where
-* $i_j$ is the item in the $j$-th position.
-* $r_{u,i_j}$ is the user u's rating of item i.
-* d is a neutral task dependent rating.
-* $\alpha$ is a half-life parameter, which controls the exponential decline of the value of positions in the ranked list.
-
-The resulting per-user scores are aggregated using:
-
-$$ R = \frac {\sum R_u}{\sum R_u^*}$$
-where  $R_u^*$ is the score of the best posible ranking for user $u$.
-
