@@ -1,8 +1,7 @@
 import click
 
-from fasttext_experiment import FasttextExperimentForSubmissions
-from fasttext_experiment import FasttextExperimentForComments
-
+from src.experiments.fasttext_experiment import FasttextExperiment
+from src.experiments.posts_type import Submissions, Comments
 
 @click.command()
 @click.option("-t", "--posts-type", "posts_type",
@@ -45,8 +44,17 @@ def app(posts_type: str,
     :param results_dir: Results folder name.
     :return: None
     """
-    experiment_cls = FasttextExperimentForSubmissions if posts_type == "submissions" else FasttextExperimentForComments
-    experiment = experiment_cls(year, working_dir, results_dir)
+    if posts_type == "submissions":
+        post_type = Submissions()
+    else:
+        post_type = Comments()
+
+    experiment = FasttextExperiment(
+        year,
+        working_dir,
+        results_dir,
+        post_type
+    )
     if command == 'texts':
         experiment.generate_texts()
     elif command == 'embeddings':

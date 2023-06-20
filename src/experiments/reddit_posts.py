@@ -3,9 +3,10 @@ import pyarrow.dataset as ds
 
 
 class RedditPosts:
-    def __init__(self, dataset, env):
+    def __init__(self, dataset, env, post_type):
         self.dataset = dataset
         self.env = env
+        self.post_type = post_type
 
     @property
     def subreddit_field(self):
@@ -64,17 +65,13 @@ class RedditPosts:
         df[self.text_field] = self.texts_from(df)
 
     def texts_from(self, df):
-        raise NotImplementedError("Should be implemented in a subclass.")
+        return self.post_type.texts_from(self, df)
 
-
-class RedditSubmissions(RedditPosts):
-    def texts_from(self, df):
-        return df['body']
-
-
-class RedditComments(RedditPosts):
-    def texts_from(self, df):
+    def submissions_text(self, df):
         return df['title'] + ' ' + df['selftext']
+
+    def comments_text(self, df):
+        return df['body']
 
 
 def get_most_popular_subreddits(dataset):
@@ -103,12 +100,12 @@ def split_subreddits(dataset):
     subreddits = get_most_popular_subreddits(dataset)
     threshold = partition_threshold(subreddits)
     for s, s_count in subreddits.items():
-        if threshold < current_cum_count + s_count:
+        current_split.append(s)
+        current_cum_count += s_count
+        if threshold < current_cum_count:
             splits.append(current_split)
             current_cum_count = 0
             current_split = []
-        current_cum_count += s_count
-        current_split.append(s)
 
     if current_split:
         splits.append(current_split)

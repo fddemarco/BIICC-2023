@@ -10,10 +10,11 @@ import src.experiments.ranking as rk
 
 
 class FasttextExperiment:
-    def __init__(self, year, working_dir, results_dir):
+    def __init__(self, year, working_dir, results_dir, post_type):
         self.year = str(year)
         self.working_dir = pathlib.Path(working_dir)
         self.results_folder = results_dir
+        self.post_type = post_type
 
     @property
     def base_dataset_dir(self):
@@ -78,16 +79,12 @@ class FasttextExperiment:
 
     @property
     def dataset_type(self):
-        raise NotImplementedError("Should be implemented in a subclass.")
+        return self.post_type.dataset_type(self)
 
-
-class FasttextExperimentForComments(FasttextExperiment):
     @property
-    def dataset_type(self):
+    def submissions_dataset(self):
         return 'pushshift-reddit-comments'
 
-
-class FasttextExperimentForSubmissions(FasttextExperiment):
     @property
-    def dataset_type(self):
+    def comments_dataset(self):
         return 'pushshift-reddit'

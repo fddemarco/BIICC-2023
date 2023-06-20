@@ -15,7 +15,7 @@ def leaning_left(z_score):
     return z_score < -1
 
 
-def ndcg_relevance_for(predicted_ranking, s):
+def normalized_dcg_relevance_for(predicted_ranking, s):
     n = len(predicted_ranking)
     return n - predicted_ranking.index(s)
 
@@ -111,7 +111,7 @@ class Ranking:
         return ndcg_score(np.asarray([true_relevance]), np.asarray([predicted_relevance]))
 
     def normalized_dcg_rank_relevance(self, predicted_ranking):
-        return [ndcg_relevance_for(predicted_ranking, s) for s in self.ranked_subreddits()]
+        return [normalized_dcg_relevance_for(predicted_ranking, s) for s in self.ranked_subreddits()]
 
     def arxiv_waller_ranking(self):
         return arxiv_waller_ranking_for(self.ranked_subreddits())
