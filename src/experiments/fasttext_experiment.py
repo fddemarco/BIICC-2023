@@ -4,9 +4,9 @@ import pandas as pd
 import pathlib
 
 
-import src.experiments.dimension_generator as dg
-import src.experiments.reddit_posts as ps
-import src.experiments.ranking as rk
+import dimension_generator as dg
+import reddit_posts as ps
+import ranking as rk
 
 
 class FasttextExperiment:
@@ -60,7 +60,7 @@ class FasttextExperiment:
         model = fasttext.load_model(model_pathname)
         dataset = ds.dataset(self.data_pathname, format="parquet")
         reddit_posts = ps.RedditPosts(dataset, self)
-        return reddit_posts.embeddings_for(model)
+        return reddit_posts.generate_embeddings_for(model)
 
     def get_fasttext_scores(self):
         df = pd.read_csv(self.embedding_pathname(), index_col=0)
