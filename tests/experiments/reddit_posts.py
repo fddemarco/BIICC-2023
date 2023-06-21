@@ -132,6 +132,5 @@ class RedditPostsTestCase(unittest.TestCase):
         self.assertEquals({'democrats'}, subreddits)
 
 
-
 if __name__ == '__main__':
     unittest.main()

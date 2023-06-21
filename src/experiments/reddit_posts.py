@@ -1,7 +1,7 @@
 import pandas as pd
 import pyarrow.dataset as ds
 
-from posts_type import Submissions, Comments
+from src.experiments.posts_type import Submissions, Comments
 
 
 class RedditPosts:
@@ -74,7 +74,7 @@ class RedditPosts:
     def generate_text(self):
         splits = self.split_subreddits()
         for split in splits:
-            grouped = self.get_posts_for_subreddits_in(split)
+            grouped = self.get_posts_in(split)
             text = grouped[self.text_field].str.cat(sep='\n')
             self.sink.write_text(text)
         return splits
@@ -85,7 +85,7 @@ class RedditPosts:
         return self.texts_by_subreddit_df(df)
 
     def texts_by_subreddit_df(self, df):
-        self.add_text_column(df)
+        df[self.text_field] = self.texts_from(df)
         grouped = (
             df
             .groupby(self.subreddit_field)[self.text_field]
@@ -94,9 +94,6 @@ class RedditPosts:
            )
         return grouped
 
-    def add_text_column(self, df):
-        df[self.text_field] = self.texts_from(df)
-
     def generate_embeddings_for(self, model):
         ranked_subreddits = self.get_ranked_subreddits()
         embeddings = self.embeddings_for_subreddits(model, ranked_subreddits)
@@ -104,19 +101,19 @@ class RedditPosts:
 
     def embeddings_for_subreddits(self, model, subreddits):
         embeddings = []
-        df = self.get_posts_for_subreddits_in(subreddits)
+        df = self.get_posts_in(subreddits)
         for s in subreddits:
             df_f = df[df[self.subreddit_field] == s].copy()
-            embeddings.append(self.embedding_for_subreddit(df_f, model))
+            embeddings.append(self.embedding_for(df_f, model))
         return embeddings
 
-    def embedding_for_subreddit(self, df, model):
+    def embedding_for(self, df, model):
         text = df[self.text_field].str.cat(sep=' ')
         embedding = model.get_sentence_vector(text).astype(float)
         return embedding
 
-    def get_posts_for_subreddits_in(self, ranked_subreddits):
-        return self.texts_by_subreddit(ds.field(self.subreddit_field).isin(ranked_subreddits))
+    def get_posts_in(self, subreddits):
+        return self.texts_by_subreddit(ds.field(self.subreddit_field).isin(subreddits))
 
     def get_ranked_subreddits(self):
         subreddits = self.get_most_popular_subreddits()
