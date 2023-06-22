@@ -85,15 +85,20 @@ class Ranking:
         # -1 = neg correlated, 0 = random, 1 = pos correlated
         predicted_ranking = self.predict_partisan_ranking()
         true_ranking = arxiv_waller_ranking_for(predicted_ranking)
-        res = stats.kendalltau(true_ranking, predicted_ranking)
+        x = [true_ranking.index(item) + 1 for item in predicted_ranking]
+        y = [i for i in range(1, len(true_ranking)+1)]
+        res = stats.kendalltau(x, y)
         return res.statistic
 
     def rbo_score(self):
         # 0 = disjoint, 1 = identical
         predicted_ranking = self.predict_partisan_ranking()
         true_ranking = self.arxiv_waller_ranking()
-        res = rbo.RankingSimilarity(true_ranking, predicted_ranking).rbo()
+        res = self.calc_rbo(predicted_ranking, true_ranking)
         return res
+
+    def calc_rbo(self, predicted_ranking, true_ranking):
+        return rbo.RankingSimilarity(true_ranking, predicted_ranking).rbo()
 
     def half_and_half_rbo_score(self):
         # 0 = disjoint, 1 = identical
@@ -101,12 +106,12 @@ class Ranking:
         true_ranking = self.arxiv_waller_ranking()
         n = len(predicted_ranking) // 2
 
-        fst_half_score = rbo.RankingSimilarity(true_ranking[:n], predicted_ranking[:n]).rbo()
-        snd_half_score = rbo.RankingSimilarity(self.split_and_reverse(n, true_ranking),
-                                               self.split_and_reverse(n, predicted_ranking)).rbo()
-        return self.take_mean(fst_half_score, snd_half_score)
+        fst_half_score = self.calc_rbo(predicted_ranking[:n], true_ranking[:n])
+        snd_half_score = self.calc_rbo(self.split_and_reverse(n, predicted_ranking),
+                                       self.split_and_reverse(n, true_ranking))
+        return self.calc_mean(fst_half_score, snd_half_score)
 
-    def take_mean(self, fst_half_score, snd_half_score):
+    def calc_mean(self, fst_half_score, snd_half_score):
         return statistics.mean([fst_half_score, snd_half_score])
 
     def split_and_reverse(self, n, ranking):
@@ -118,12 +123,12 @@ class Ranking:
         # 0 = disjoint, 1 = identical
         predicted_ranking = self.predict_partisan_ranking()
         true_ranking = self.arxiv_waller_ranking()
-        desc_way_score = rbo.RankingSimilarity(true_ranking, predicted_ranking).rbo()
+        desc_way_score = self.calc_rbo(predicted_ranking, true_ranking)
 
         predicted_ranking.reverse()
         true_ranking.reverse()
-        asc_way_score = rbo.RankingSimilarity(true_ranking, predicted_ranking).rbo()
-        return self.take_mean(desc_way_score, asc_way_score)
+        asc_way_score = self.calc_rbo(predicted_ranking, true_ranking)
+        return self.calc_mean(desc_way_score, asc_way_score)
 
     def predict_partisan_ranking(self):
         return sorted(self.ranked_subreddits(), key=lambda k: self.score_for(k))
