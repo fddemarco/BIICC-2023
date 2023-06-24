@@ -169,6 +169,18 @@ class Ranking:
             sns.violinplot(data=df, y='dem_rep', x='political party', inner='stick', ax=axis)
             return fig
 
+    def kde_plot(self):
+        df = pd.DataFrame(
+            {'dem_rep': self.scores(),
+             'subreddit': self.subreddits(),
+             'political party': self.subreddits_party_labels()
+             }
+        )
+        with sns.plotting_context("paper"):
+            fig, axis = plt.subplots()
+            sns.kdeplot(data=df, x='dem_rep', hue='political party', fill=True, ax=axis)
+            return fig
+
     def bean_plot(self):
         df = pd.DataFrame(
             {'dem_rep': self.scores(),
