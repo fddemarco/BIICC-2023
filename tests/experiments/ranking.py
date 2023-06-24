@@ -1,5 +1,6 @@
 import unittest
-from src.experiments.ranking import Ranking, arxiv_waller_labels
+from src.experiments.ranking import Ranking, calc_rbo
+import scipy
 
 
 def complete_ranking():
@@ -53,7 +54,7 @@ class RankingTestCase(unittest.TestCase):
         ranking = complete_ranking()
         self.assertAlmostEquals(
             1.0,
-            ranking.calc_rbo(
+            calc_rbo(
                 ranking.arxiv_waller_ranking(),
                 ranking.arxiv_waller_ranking()
             )
@@ -63,7 +64,7 @@ class RankingTestCase(unittest.TestCase):
         ranking = complete_ranking()
         self.assertAlmostEquals(
             1.0,
-            ranking.calc_rbo(
+            calc_rbo(
                 ranking.arxiv_waller_ranking(),
                 ranking.arxiv_waller_ranking()[:7]
             )
@@ -74,55 +75,51 @@ class RankingTestCase(unittest.TestCase):
         predicted = ['fun 1', 'fun 2']
         self.assertAlmostEquals(
             0.0,
-            ranking.calc_rbo(
+            calc_rbo(
                 predicted,
                 ranking.arxiv_waller_ranking()[:7]
             )
         )
 
     def test_calc_rbo_one_element_concordant(self):
-        ranking = Ranking({})
         x = ['Conservative']
         y = ['Conservative']
         self.assertAlmostEquals(
             1.0,
-            ranking.calc_rbo(
+            calc_rbo(
                 x,
                 y
             )
         )
 
     def test_calc_rbo_one_element_discordant(self):
-        ranking = Ranking({})
         x = ['Conservative']
         y = ['democrats']
         self.assertAlmostEquals(
             0.0,
-            ranking.calc_rbo(
+            calc_rbo(
                 x,
                 y
             )
         )
 
     def test_calc_rbo_1(self):
-        ranking = Ranking({})
         x = ['democrats', 'EnoughLibertarianSpam', 'hillaryclinton', 'progressive', 'BlueMidterm2018']
         y = ['EnoughLibertarianSpam', 'democrats', 'hillaryclinton', 'progressive', 'BlueMidterm2018']
         self.assertAlmostEquals(
             0.8,
-            ranking.calc_rbo(
+            calc_rbo(
                 x,
                 y
             )
         )
 
     def test_calc_rbo_2(self):
-        ranking = Ranking({})
         y = ['democrats', 'EnoughLibertarianSpam', 'hillaryclinton', 'progressive', 'BlueMidterm2018']
         x = ['democrats', 'EnoughLibertarianSpam', 'hillaryclinton', 'BlueMidterm2018', 'progressive']
         self.assertAlmostEquals(
             0.95,
-            ranking.calc_rbo(
+            calc_rbo(
                 x,
                 y
             )
@@ -147,6 +144,15 @@ class RankingTestCase(unittest.TestCase):
             'BlueMidterm2018': 1
         })
         self.assertAlmostEquals(0.8, ranking.rbo_score())
+        print(scipy.__version__)
+
+    def test_violin_plot(self):
+        ranking = complete_ranking()
+        plot = ranking.violin_plot()
+        plot.savefig(
+            'plots/violin_plot_test.png',
+            dpi=300,
+            bbox_inches='tight')
 
 
 if __name__ == '__main__':

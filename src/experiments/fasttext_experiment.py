@@ -71,7 +71,7 @@ class FasttextExperiment:
     def compare_rankings(self):
         fasttext_ranking = self.get_fasttext_scores().to_dict()['dem_rep']
         ranking = rk.Ranking(fasttext_ranking)
-        plot = ranking.compare_rankings()
+        plot = ranking.bump_plot()
         plot.savefig(
             self.results_dir / f'rankings_comparison.png',
             dpi=300,
