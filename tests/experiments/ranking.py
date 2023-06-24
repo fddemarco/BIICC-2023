@@ -154,6 +154,14 @@ class RankingTestCase(unittest.TestCase):
             dpi=300,
             bbox_inches='tight')
 
+    def test_bean_plot(self):
+        ranking = complete_ranking()
+        plot = ranking.bean_plot()
+        plot.savefig(
+            'plots/bean_plot_test.png',
+            dpi=300,
+            bbox_inches='tight')
+
 
 if __name__ == '__main__':
     unittest.main()

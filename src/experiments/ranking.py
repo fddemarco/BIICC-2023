@@ -161,11 +161,33 @@ class Ranking:
         df = pd.DataFrame(
             {'dem_rep': self.scores(),
              'subreddit': self.subreddits(),
-             'political_party': self.subreddits_party_labels()
+             'political party': self.subreddits_party_labels()
              }
         )
         with sns.plotting_context("paper"):
-            return sns.violinplot(data=df, x='dem_rep', y='political_party', inner='stick').get_figure()
+            fig, axis = plt.subplots()
+            sns.violinplot(data=df, y='dem_rep', x='political party', inner='stick', ax=axis)
+            return fig
+
+    def bean_plot(self):
+        df = pd.DataFrame(
+            {'dem_rep': self.scores(),
+             'subreddit': self.subreddits(),
+             'political_party': self.subreddits_party_labels(),
+             'political party': [''] * len(self.scores())
+             }
+        )
+        with sns.plotting_context("paper"):
+            fig, axis = plt.subplots()
+            sns.violinplot(
+                data=df,
+                x='political party',
+                y='dem_rep',
+                hue='political_party',
+                split=True,
+                inner='stick',
+                ax=axis)
+            return fig
 
     def subreddits_party_labels(self):
         return [waller_political_party_label_for(s) for s in self.subreddits()]
