@@ -1,6 +1,7 @@
 import unittest
 
 import pandas as pd
+from pandas.testing import assert_frame_equal
 import pyarrow as pa
 import pyarrow.dataset as ds
 
@@ -130,6 +131,48 @@ class RedditPostsTestCase(unittest.TestCase):
         posts, _ = self.create_posts_instance(df)
         subreddits = set(posts.get_ranked_subreddits())
         self.assertEquals({'democrats'}, subreddits)
+
+    def test_truncate_dataset(self):
+        df = pd.DataFrame(
+            {
+                'title': ['democrats title 1', 'democrats title 2', 'fun title 1'],
+                'selftext': ['democrats body 1', 'democrats body 2', 'fun body 1'],
+                'subreddit': ['democrats', 'democrats', 'fun'],
+                'score': [10, 5, 1]
+            })
+        expected = pd.DataFrame(
+            {
+                'title': ['fun title 1', 'democrats title 1'],
+                'selftext': ['fun body 1', 'democrats body 1'],
+                'subreddit': ['fun', 'democrats'],
+                'score': [1, 10],
+                'text': ['fun title 1 fun body 1', 'democrats title 1 democrats body 1']
+            })
+        posts, _ = self.create_posts_instance(df)
+        df = posts.truncate_dataset(35)
+        self.assertTrue(
+            expected.equals(df)
+        )
+
+    def test_truncate_dataset_first_post_exceeds_threshold(self):
+        df = pd.DataFrame(
+            {
+                'title': ['democrats title 1', 'title 2', 'fun title 1'],
+                'selftext': ['', '', ''],
+                'subreddit': ['democrats', 'democrats', 'fun'],
+                'score': [10, 5, 1]
+            })
+        expected = pd.DataFrame(
+            {
+                'title': ['fun title 1', 'title 2'],
+                'selftext': ['', ''],
+                'subreddit': ['fun', 'democrats'],
+                'score': [1, 5],
+                'text': ['fun title 1', 'title 2']
+            })
+        posts, _ = self.create_posts_instance(df)
+        df = posts.truncate_dataset(15)
+        assert_frame_equal(expected, df)
 
 
 if __name__ == '__main__':

@@ -43,9 +43,13 @@ class FasttextExperiment:
         return self.results_dir / 'embeddings.csv'
 
     def generate_texts(self):
-        dataset = ds.dataset(self.data_pathname, format="parquet")
-        reddit_posts = ps.RedditPosts(dataset, self)
+        reddit_posts = self.get_reddit_posts()
         reddit_posts.generate_text()
+
+    def get_reddit_posts(self):
+        dataset = ds.dataset(self.data_pathname, format="parquet")
+        reddit_posts = ps.RedditPosts(dataset, self, self.post_type)
+        return reddit_posts
 
     def write_text(self, text):
         with open(self.subreddits_pathname, 'a') as f:
@@ -58,24 +62,27 @@ class FasttextExperiment:
     def generate_embeddings(self):
         model_pathname = str(self.fasttext_model_pathname.absolute())
         model = fasttext.load_model(model_pathname)
-        dataset = ds.dataset(self.data_pathname, format="parquet")
-        reddit_posts = ps.RedditPosts(dataset, self)
+        reddit_posts = self.get_reddit_posts()
         return reddit_posts.generate_embeddings_for(model)
 
     def get_fasttext_scores(self):
         df = pd.read_csv(self.embedding_pathname(), index_col=0)
         dimensions = dg.DimensionGenerator(df).generate_dimensions_from_seeds([("democrats", "Conservative")])
-        scores = dg.score_embedding(df, zip(['dem_rep'], dimensions))
+        scores = dg.score_embedding(df, zip([self.dem_rep_field], dimensions))
         return scores
 
     def compare_rankings(self):
-        fasttext_ranking = self.get_fasttext_scores().to_dict()['dem_rep']
+        fasttext_ranking = self.get_fasttext_scores().to_dict()[self.dem_rep_field]
         ranking = rk.Ranking(fasttext_ranking)
         plot = ranking.bump_plot()
         plot.savefig(
             self.results_dir / f'rankings_comparison.png',
             dpi=300,
             bbox_inches='tight')
+
+    @property
+    def dem_rep_field(self):
+        return 'dem_rep'
 
     @property
     def dataset_type(self):

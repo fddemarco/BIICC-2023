@@ -57,29 +57,7 @@ def write_splits(dataset, splits, base_dir):
         )
 
 
-def truncate_splits(splits, base_dir, text_len_threshold):
-    dfs = []
-    for i, ss in enumerate(splits):
-        dataset = ds.dataset(f"{base_dir}/part-0{i}.parquet", format="parquet")
-        for s in ss:
-            dataset_s = dataset.filter(ds.field("subreddit") == s)
-            df_s = truncate_data(dataset_s, text_len_threshold)
-            dfs.append(df_s)
-    result = pd.concat(dfs).reset_index(drop=True)
-    return result
 
-
-def truncate_data(dataset, text_len_threshold):
-    df = dataset.to_table().to_pandas()
-    df.sort_values("score", ascending=False)
-    df["text"] = df["title"] + " " + df["selftext"]
-    df["cumulative_len"] = df["text"].str.len().cumsum()
-    first_row = np.zeros(len(df), dtype=bool)
-    first_row[0] = True
-    df = df[
-        (df["cumulative_len"] <= text_len_threshold) | first_row
-        ]
-    return df
 
 
 def get_data():

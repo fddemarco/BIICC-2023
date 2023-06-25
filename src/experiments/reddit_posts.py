@@ -38,6 +38,33 @@ class RedditPosts:
     def body_field(self):
         return 'body'
 
+    @property
+    def score_field(self):
+        return 'score'
+
+    def grouped_data_iterator(self):
+        splits = self.split_subreddits()
+        for split in splits:
+            yield self.get_texts_by_subreddit(split)
+
+    def grouped_split_iterator(self, split):
+        group = self.get_texts_by_subreddit(split)
+        yield from self.subreddit_iterator(group, split)
+
+    def subreddit_iterator(self, group, split):
+        for s in split:
+            df = group[group[self.subreddit_field] == s].copy()
+            yield df
+
+    def posts_split_iterator(self, split):
+        group = self.get_posts_in(split)
+        yield from self.subreddit_iterator(group, split)
+
+    def get_texts_by_subreddit(self, split):
+        df = self.get_posts_in(split)
+        group = self.texts_by_subreddit(df)
+        return group
+
     def split_subreddits(self):
         splits = []
         current_split = []
@@ -63,29 +90,45 @@ class RedditPosts:
         """
         subreddits = (
             self.dataset
-            .to_table(columns=["subreddit"])
-            .column("subreddit")
+            .to_table(columns=[self.subreddit_field])
+            .column(self.subreddit_field)
             .to_pandas()
             .value_counts()
             .sort_values(ascending=True)[-k:]
         )
         return subreddits
 
-    def generate_text(self):
-        splits = self.split_subreddits()
-        for split in splits:
-            grouped = self.get_posts_in(split)
-            text = grouped[self.text_field].str.cat(sep='\n')
-            self.sink.write_text(text)
-        return splits
+    def truncate_dataset(self, text_len_threshold=10000):
+        dfs = []
+        for split in self.split_subreddits():
+            for df in self.posts_split_iterator(split):
+                df_s = self.truncate_subreddit(df, text_len_threshold)
+                dfs.append(df_s)
+        result = pd.concat(dfs).reset_index(drop=True)
+        return result
 
-    def texts_by_subreddit(self, filter_condition):
+    def truncate_subreddit(self, df, text_len_threshold):
+        df.sort_values(self.score_field, ascending=False)
+        text_len = df[self.text_field].str.len()
+        df = df[text_len < text_len_threshold]
+
+        cumulative_len = df[self.text_field].str.len().cumsum()
+        df = df[cumulative_len < text_len_threshold]
+        return df
+
+    def generate_text(self):
+        for split_group in self.grouped_data_iterator():
+            text = split_group[self.text_field].str.cat(sep='\n')
+            self.sink.write_text(text)
+
+    def get_posts_in(self, subreddits):
+        filter_condition = ds.field(self.subreddit_field).isin(subreddits)
         filtered_dataset = self.dataset.filter(filter_condition)
         df = filtered_dataset.to_table().to_pandas()
-        return self.texts_by_subreddit_df(df)
-
-    def texts_by_subreddit_df(self, df):
         df[self.text_field] = self.texts_from(df)
+        return df
+
+    def texts_by_subreddit(self, df):
         grouped = (
             df
             .groupby(self.subreddit_field)[self.text_field]
@@ -101,19 +144,14 @@ class RedditPosts:
 
     def embeddings_for_subreddits(self, model, subreddits):
         embeddings = []
-        df = self.get_posts_in(subreddits)
-        for s in subreddits:
-            df_f = df[df[self.subreddit_field] == s].copy()
-            embeddings.append(self.embedding_for(df_f, model))
+        for df in self.grouped_split_iterator(subreddits):
+            embeddings.append(self.embedding_for(df, model))
         return embeddings
 
     def embedding_for(self, df, model):
-        text = df[self.text_field].str.cat(sep=' ')
+        text = df[self.text_field].item()
         embedding = model.get_sentence_vector(text).astype(float)
         return embedding
-
-    def get_posts_in(self, subreddits):
-        return self.texts_by_subreddit(ds.field(self.subreddit_field).isin(subreddits))
 
     def get_ranked_subreddits(self):
         subreddits = self.get_most_popular_subreddits()
