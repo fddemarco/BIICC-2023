@@ -22,6 +22,8 @@ Cada documento tiene que ser una sola linea. Los documentos se separan con \n. C
 Entrenar: 
 $ fasttext skipgram -input subreddits.txt -output subreddits -epoch 1 -dim 300 -thread 8
 
+$ fasttext skipgram -input subreddits.txt -output subreddits -pretrainedVectors wiki.en.vec -dim 300
+
 
 Se puede modificar la cantidad de threads que usa fasttext con -threads
 

@@ -1,7 +1,8 @@
 import click
 
-from src.experiments.fasttext_experiment import FasttextExperiment
-from src.experiments.posts_type import Submissions, Comments
+from fasttext_experiment import FasttextExperiment
+from posts_type import Submissions, Comments
+
 
 @click.command()
 @click.option("-t", "--posts-type", "posts_type",
@@ -21,7 +22,7 @@ from src.experiments.posts_type import Submissions, Comments
               )
 @click.option("-e", "--execute-command", "command",
               help="Execute a specified command.",
-              type=click.Choice(['texts', 'embeddings', 'compare']),
+              type=click.Choice(['texts', 'truncate', 'embeddings', 'compare']),
               default='~/Downloads/fastText-0.9.2/fasttext'
               )
 @click.option("-o", "--results-output", "results_dir",
@@ -56,7 +57,12 @@ def app(posts_type: str,
         post_type
     )
     if command == 'texts':
-        experiment.generate_texts()
+        if results_dir == 'truncated':
+            experiment.generate_texts(pathname=experiment.truncated_data_pathname)
+        else:
+            experiment.generate_texts()
+    elif command == 'truncate':
+        experiment.generate_truncated_texts()
     elif command == 'embeddings':
         experiment.save_embeddings_to_csv()
     elif command == 'compare':

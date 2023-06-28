@@ -1,7 +1,7 @@
 import pandas as pd
 import pyarrow.dataset as ds
 
-from src.experiments.posts_type import Submissions, Comments
+from posts_type import Submissions, Comments
 
 
 class RedditPosts:
@@ -171,7 +171,7 @@ class RedditPosts:
 
 
 def partition_threshold(subreddits):
-    return int(subreddits.sum()) // 100
+    return int(subreddits.sum()) // 20
 
 
 def get_ranked_subreddits_from(ranking):
