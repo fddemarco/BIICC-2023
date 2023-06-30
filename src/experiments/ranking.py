@@ -1,4 +1,5 @@
 import statistics
+from collections import namedtuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -36,6 +37,30 @@ class Ranking:
             :param ranking: Para cada subreddit, nos dice su score. {'Conservative': -0.228}
         """
         self.ranking = ranking
+
+    def compare_ranking(self):
+        classification_metrics = {
+            'Precision': self.precision_score(),
+            'Recall': self.recall_score(),
+            'F1 Score': self.f1_score()
+        }
+
+        ranking_metrics = {
+            'Kendall Tau': [self.kendall_score()],
+            'Classic RBO': [self.rbo_score()],
+            'Two way RBO': [self.two_way_rbo_score()],
+            'H&H RBO': [self.half_and_half_rbo_score()]
+        }
+
+        plots = {
+            'bump': self.bump_plot(),
+            'kde': self.kde_plot(),
+            'violin': self.violin_plot(),
+            'bean': self.bean_plot()
+        }
+
+        Metrics = namedtuple("Metrics", "classification_metrics ranking_metrics plots")
+        return Metrics(classification_metrics, ranking_metrics, plots)
 
     # Classification metrics
 
@@ -145,6 +170,8 @@ class Ranking:
     def arxiv_waller_ranking(self):
         return arxiv_waller_ranking_for(self.subreddits())
 
+    # Plots
+
     def bump_plot(self):
         predicted_ranking = self.subreddits_sorted_by_score_desc()
         waller_ranking = arxiv_waller_ranking_for(predicted_ranking)
@@ -155,7 +182,8 @@ class Ranking:
                 "Subreddit": subreddit
             } for i, subreddit in enumerate(waller_ranking)
         ]
-        return bump_chart(rankings, len(waller_ranking))
+        with sns.plotting_context("paper"):
+            return bump_chart(rankings, len(waller_ranking))
 
     def violin_plot(self):
         df = pd.DataFrame(
@@ -261,7 +289,7 @@ def arxiv_waller_ranking_for(subreddits):
 
 
 def bump_chart(elements, n):
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots()
     for element in elements:
         ax.plot(
             element["Model"],
@@ -286,9 +314,9 @@ def bump_chart(elements, n):
 
     ax.set_xlabel('Model')
     ax.set_ylabel('Rank')
-    ax.set_title('Comparison of Models on Subreddit Classification Task')
+    ax.set_title('Comparison of Models')
 
     for spine in ax.spines.values():
         spine.set_visible(False)
-    plt.tight_layout()
-    return plt
+
+    return fig

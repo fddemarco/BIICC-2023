@@ -3,21 +3,31 @@ import pyarrow.dataset as ds
 import pandas as pd
 import pathlib
 
-
 import dimension_generator as dg
 import reddit_posts as ps
 import ranking as rk
 
 
+def mkdir_if_not_exists(_dir):
+    if not _dir.exists():
+        _dir.mkdir(parents=True)
+    return _dir
+
+
 class FasttextExperiment:
-    def __init__(self, year, working_dir, results_dir, post_type):
+    def __init__(self, year, working_dir, results_dir, post_type, dataset):
         self.year = str(year)
         self.working_dir = pathlib.Path(working_dir)
         self.results_folder = results_dir
         self.post_type = post_type
+        self.dataset = dataset
 
     @property
     def base_dataset_dir(self):
+        return self.base_parent_dir / self.dataset
+
+    @property
+    def base_parent_dir(self):
         return self.working_dir / self.dataset_type / self.year
 
     @property
@@ -26,17 +36,13 @@ class FasttextExperiment:
 
     @property
     def truncated_data_pathname(self):
-        truncated_dir = self.base_dataset_dir / 'truncated'
-        if not truncated_dir.exists():
-            truncated_dir.mkdir(parents=True)
-        return truncated_dir
+        truncated_dir = self.base_parent_dir / 'truncated'
+        return mkdir_if_not_exists(truncated_dir)
 
     @property
     def results_dir(self):
         results_dir = self.base_dataset_dir / self.results_folder
-        if not results_dir.exists():
-            results_dir.mkdir(parents=True)
-        return results_dir
+        return mkdir_if_not_exists(results_dir)
 
     @property
     def subreddits_pathname(self):
@@ -49,8 +55,8 @@ class FasttextExperiment:
     def embedding_pathname(self):
         return self.results_dir / 'embeddings.csv'
 
-    def generate_texts(self, pathname=None):
-        reddit_posts = self.get_reddit_posts(pathname)
+    def generate_texts(self):
+        reddit_posts = self.get_reddit_posts()
         reddit_posts.generate_text()
 
     def generate_truncated_texts(self):
@@ -58,10 +64,8 @@ class FasttextExperiment:
         df = reddit_posts.truncate_dataset()
         df.to_parquet(self.truncated_data_pathname / 'truncated_data.parquet')
 
-    def get_reddit_posts(self, pathname=None):
-        if pathname is None:
-            pathname = self.data_pathname
-        dataset = ds.dataset(pathname, format="parquet")
+    def get_reddit_posts(self):
+        dataset = ds.dataset(self.data_pathname, format="parquet")
         reddit_posts = ps.RedditPosts(dataset, self, self.post_type)
         return reddit_posts
 
@@ -86,11 +90,16 @@ class FasttextExperiment:
     def compare_rankings(self):
         fasttext_ranking = self.get_fasttext_scores().to_dict()[self.dem_rep_field]
         ranking = rk.Ranking(fasttext_ranking)
-        plot = ranking.bump_plot()
-        plot.savefig(
-            self.results_dir / f'rankings_comparison.png',
-            dpi=300,
-            bbox_inches='tight')
+        metrics = ranking.compare_ranking()
+
+        pd.DataFrame(metrics.classification_metrics).to_csv(self.results_dir / 'classification_metrics.csv')
+        pd.DataFrame(metrics.ranking_metrics).to_csv(self.results_dir / 'ranking_metrics.csv')
+
+        for name, fig in metrics.plots.items():
+            fig.savefig(
+                self.results_dir / f"{name}.png",
+                dpi=300,
+                bbox_inches='tight')
 
     @property
     def dem_rep_field(self):
