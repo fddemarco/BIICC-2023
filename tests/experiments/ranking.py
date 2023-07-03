@@ -170,6 +170,24 @@ class RankingTestCase(unittest.TestCase):
             dpi=300,
             bbox_inches='tight')
 
+    def test_auc_roc_plot(self):
+        ranking = complete_ranking()
+        plot = ranking.roc_auc_plot()
+        plot.savefig(
+            'plots/auc_roc_plot_test.png',
+            dpi=300,
+            bbox_inches='tight')
+
+    def test_auc_roc_score(self):
+        ranking = complete_ranking()
+        score = ranking.roc_auc_score()
+        self.assertAlmostEquals(0.99, score)
+
+    def test_t_student_p_value(self):
+        ranking = complete_ranking()
+        p_value = ranking.t_student_p_value()
+        self.assertAlmostEquals(1.6477894923155955e-06, p_value)
+
 
 if __name__ == '__main__':
     unittest.main()

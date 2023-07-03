@@ -51,14 +51,16 @@ class Ranking:
             'Classic RBO': [self.rbo_score()],
             'Two way RBO': [self.two_way_rbo_score()],
             'H&H RBO': [self.half_and_half_rbo_score()],
-            'ROC AUC': [self.roc_auc_score()]
+            'ROC AUC': [self.roc_auc_score()],
+            'T Student - p-value': [self.t_student_p_value()]
         }
 
         plots = {
             'bump': self.bump_plot(),
             'kde': self.kde_plot(),
             'violin': self.violin_plot(),
-            'bean': self.bean_plot()
+            'bean': self.bean_plot(),
+            'roc_auc': self.roc_auc_plot()
         }
 
         Metrics = namedtuple("Metrics", "classification_metrics ranking_metrics plots")
