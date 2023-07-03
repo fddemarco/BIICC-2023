@@ -2,11 +2,12 @@ import statistics
 from collections import namedtuple
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import rbo
 from scipy import stats
 import seaborn as sns
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_curve, auc, roc_auc_score
 
 
 def leaning_right(z_score):
@@ -49,7 +50,8 @@ class Ranking:
             'Kendall Tau': [self.kendall_score()],
             'Classic RBO': [self.rbo_score()],
             'Two way RBO': [self.two_way_rbo_score()],
-            'H&H RBO': [self.half_and_half_rbo_score()]
+            'H&H RBO': [self.half_and_half_rbo_score()],
+            'ROC AUC': [self.roc_auc_score()]
         }
 
         plots = {
@@ -67,11 +69,30 @@ class Ranking:
     def z_score_for(self, subreddit):
         return (self.score_for(subreddit) - self.mean_score()) / self.sd_score()
 
+    def z_scores(self):
+        return self.z_scores_for_subreddits(self.subreddits())
+
+    def z_scores_for_subreddits(self, subreddits):
+        return [self.z_score_for(s) for s in subreddits]
+
     def score_for(self, subreddit):
         return self.ranking[subreddit]
 
     def scores(self):
-        return self.ranking.values()
+        return self.scores_for_subreddits(self.subreddits())
+
+    def scores_for_subreddits(self, subreddits):
+        return [self.score_for(s) for s in subreddits]
+
+    def party_scores(self, party_label):
+        partisans = self.subreddits_of_partisan(party_label)
+        return np.array(self.z_scores_for_subreddits(partisans))
+
+    def democrats_scores(self):
+        return self.party_scores(democrat_label())
+
+    def conservatives_scores(self):
+        return self.party_scores(conservative_label())
 
     def subreddits(self):
         return self.ranking.keys()
@@ -164,6 +185,17 @@ class Ranking:
         asc_way_score = calc_rbo(predicted_ranking, true_ranking)
         return calc_mean(desc_way_score, asc_way_score)
 
+    def t_student_p_value(self):
+        t_stat, p_val_t = stats.ttest_ind(self.conservatives_scores(), self.democrats_scores())
+        return p_val_t
+
+    def roc_auc_score(self):
+        standardized_scores = np.array(self.z_scores())
+        probabilities = 1 / (1 + np.exp(-standardized_scores))
+        labels = [1 if label == conservative_label() else 0 for label in self.subreddits_party_labels()]
+        roc_auc = roc_auc_score(labels, probabilities)
+        return roc_auc
+
     def subreddits_sorted_by_score_desc(self):
         return sorted(self.subreddits(), key=lambda k: self.score_for(k))
 
@@ -229,8 +261,36 @@ class Ranking:
                 ax=axis)
             return fig
 
+    def roc_auc_plot(self):
+        # Genera dos distribuciones, una para la "clase" positiva y otra para la negativa
+        negative = self.democrats_scores()
+        positive = self.conservatives_scores()
+
+        # Junta los datos en un solo arreglo y crea las etiquetas correspondientes
+        data = np.concatenate([positive, negative])
+        labels = np.concatenate([np.ones(len(positive)), np.zeros(len(negative))])
+
+        # Calcula la curva ROC
+        fpr, tpr, _ = roc_curve(labels, data)
+        roc_auc = auc(fpr, tpr)
+
+        with sns.plotting_context("paper"):
+            fig, axis = plt.subplots()
+            axis.plot(fpr, tpr, color='darkorange', label='Curva ROC (area = %0.2f)' % roc_auc)
+            axis.plot([0, 1], [0, 1], color='navy', linestyle='--')  # línea diagonal para comparación
+            axis.set_xlim([0.0, 1.0])
+            axis.set_ylim([0.0, 1.05])
+            axis.set_xlabel('Tasa de Falsos Positivos')
+            axis.set_ylabel('Tasa de Verdaderos Positivos')
+            axis.set_title('Curva ROC de las distribuciones')
+            axis.legend(loc="lower right")
+            return fig
+
     def subreddits_party_labels(self):
         return [waller_political_party_label_for(s) for s in self.subreddits()]
+
+    def subreddits_of_partisan(self, party_label):
+        return [s for s in self.subreddits() if waller_political_party_label_for(s) == party_label]
 
 
 def democrat_label():
