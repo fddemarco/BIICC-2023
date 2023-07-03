@@ -1,4 +1,5 @@
 import fasttext
+import matplotlib.pyplot as plt
 import pyarrow.dataset as ds
 import pandas as pd
 import pathlib
@@ -100,6 +101,7 @@ class FasttextExperiment:
                 self.results_dir / f"{name}.png",
                 dpi=300,
                 bbox_inches='tight')
+            plt.close(fig)
 
     @property
     def dem_rep_field(self):

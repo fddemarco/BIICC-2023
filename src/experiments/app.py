@@ -8,6 +8,7 @@ from posts_type import Submissions, Comments
 @click.option("-t", "--posts-type", "posts_type",
               help="Specify the type of Reddit posts to process: s (submissions) / c (comments).",
               type=click.Choice(['submissions', 'comments']),
+              default='submissions'
               )
 @click.option("--from", "_from",
               help="Specify the start year of the posts to process (2012-2018).",
