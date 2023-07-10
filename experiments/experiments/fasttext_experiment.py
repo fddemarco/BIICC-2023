@@ -1,8 +1,9 @@
-import fasttext
 import matplotlib.pyplot as plt
 import pyarrow.dataset as ds
 import pandas as pd
 import pathlib
+
+import fasttext
 
 import experiments.dimension_generator as dg
 import experiments.reddit_posts as ps

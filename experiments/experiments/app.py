@@ -23,7 +23,7 @@ class Options(str, Enum):
 
 class Types(Options):
     """
-    Reddit Posts type
+    Reddit Posts type for CLI argument
     """
     SUBMISSIONS = "submissions"
     COMMENTS = "comments"
@@ -31,7 +31,7 @@ class Types(Options):
 
 class Dataset(Options):
     """
-    Posts Dataset used
+    Posts Dataset type for CLI argument
     """
     ORIGINAL = "original"
     TRUNCATED = "truncated"
@@ -39,7 +39,7 @@ class Dataset(Options):
 
 class OutputDir(Options):
     """
-    Output directory
+    Output directory type for CLI argument
     """
     RESULTS = "results"
     PRETRAINED = "pretrained"
@@ -47,7 +47,7 @@ class OutputDir(Options):
 
 class Command(Options):
     """
-    App command
+    Command type for CLI argument
     """
     TEXTS = 'texts'
     TRUNCATE = 'truncate'
