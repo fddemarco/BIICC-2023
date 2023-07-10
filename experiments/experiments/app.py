@@ -1,32 +1,31 @@
 import click
-
-from fasttext_experiment import FasttextExperiment
-from posts_type import Submissions, Comments
+from experiments.fasttext_experiment import FasttextExperiment
+from experiments.posts_type import Submissions, Comments
 
 
 @click.command()
 @click.option("-t", "--posts-type", "posts_type",
-              help="Specify the type of Reddit posts to process: s (submissions) / c (comments).",
+              help="Specify the type of Reddit posts to process: submissions / comments",
               type=click.Choice(['submissions', 'comments']),
               default='submissions'
               )
 @click.option("--from", "_from",
-              help="Specify the start year of the posts to process (2012-2018).",
+              help="Specify the start year of the posts to process (2012-2018)",
               type=click.IntRange(2012, 2018),
               default=2012
               )
 @click.option("--to", "_to",
-              help="Specify the end year of the posts to process (2012-2018).",
+              help="Specify the end year of the posts to process (2012-2018)",
               type=click.IntRange(2012, 2018),
               default=2018
               )
 @click.option("-wd", "--working-dir", "working_dir",
-              help="Specify the working directory.",
+              help="Specify the working directory",
               type=click.Path(exists=True, readable=True, writable=True),
               default='.'
               )
 @click.option("-e", "--execute-command", "command",
-              help="Execute a specified command.",
+              help="Execute a specified command",
               type=click.Choice(['texts', 'truncate', 'embeddings', 'compare']),
               default='~/Downloads/fastText-0.9.2/fasttext'
               )
@@ -82,7 +81,3 @@ def app(posts_type: str,
             experiment.compare_rankings()
         else:
             raise ValueError("Invalid command.")
-
-
-if __name__ == "__main__":
-    app()

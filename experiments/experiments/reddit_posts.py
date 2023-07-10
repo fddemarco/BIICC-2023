@@ -1,7 +1,7 @@
 import pandas as pd
 import pyarrow.dataset as ds
 
-from posts_type import Submissions, Comments
+from .posts_type import Submissions, Comments
 
 
 class RedditPosts:

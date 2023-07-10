@@ -5,7 +5,7 @@ from pandas.testing import assert_frame_equal
 import pyarrow as pa
 import pyarrow.dataset as ds
 
-from src.experiments.reddit_posts import RedditPosts
+from experiments.reddit_posts import RedditPosts
 from experiment_stub import FasttextExperimentStub
 from model_stub import ModelStub
 
@@ -26,7 +26,7 @@ class RedditPostsTestCase(unittest.TestCase):
             })
         posts, text_sink = self.create_posts_instance(df)
         posts.generate_text()
-        self.assertEquals(
+        self.assertEqual(
             {'reddit title 1 reddit body 1',
              'fun title 1 fun body 1 fun title 2 fun body 2'}, text_sink.text)
 
@@ -40,7 +40,7 @@ class RedditPostsTestCase(unittest.TestCase):
         posts, text_sink = self.create_posts_instance(df)
         posts.generate_text()
 
-        self.assertEquals(
+        self.assertEqual(
             {'reddit title 1 reddit body 1',
              'fun body 1 fun title 2 fun body 2'}, text_sink.text)
 
@@ -54,7 +54,7 @@ class RedditPostsTestCase(unittest.TestCase):
         posts, text_sink = self.create_posts_instance(df)
         posts.generate_text()
 
-        self.assertEquals(
+        self.assertEqual(
             {'reddit title 1 reddit body 1',
              'fun title 1 fun title 2 fun body 2'}, text_sink.text)
 
@@ -68,7 +68,7 @@ class RedditPostsTestCase(unittest.TestCase):
         posts, _ = self.create_posts_instance(df)
         subreddits = posts.get_most_popular_subreddits(1).index.tolist()
 
-        self.assertEquals(['fun'], subreddits)
+        self.assertEqual(['fun'], subreddits)
 
     def test_get_most_popular_subreddits_ascending(self):
         df = pd.DataFrame(
@@ -80,7 +80,7 @@ class RedditPostsTestCase(unittest.TestCase):
         posts, _ = self.create_posts_instance(df)
         subreddits = posts.get_most_popular_subreddits(2).index.tolist()
 
-        self.assertEquals(['reddit', 'fun'], subreddits)
+        self.assertEqual(['reddit', 'fun'], subreddits)
 
     def test_generate_embeddings(self):
         df = pd.DataFrame(
@@ -92,9 +92,9 @@ class RedditPostsTestCase(unittest.TestCase):
         posts, _ = self.create_posts_instance(df)
         model = ModelStub()
         df = posts.generate_embeddings_for(model)
-        self.assertEquals((2, 300), df.shape)
+        self.assertEqual((2, 300), df.shape)
         subreddits = set(df.index)
-        self.assertEquals({'democrats', 'Conservative'}, subreddits)
+        self.assertEqual({'democrats', 'Conservative'}, subreddits)
 
     def test_text_generate_embeddings(self):
         df = pd.DataFrame(
@@ -108,7 +108,7 @@ class RedditPostsTestCase(unittest.TestCase):
         posts.generate_embeddings_for(model)
         democrats_text = 'democrats title 1 democrats body 1 democrats title 2 democrats body 2'
         conservative_text = 'Conservative title 1 Conservative body 1'
-        self.assertEquals({democrats_text, conservative_text}, model.text)
+        self.assertEqual({democrats_text, conservative_text}, model.text)
 
     def test_ranked_subreddits(self):
         df = pd.DataFrame(
@@ -119,7 +119,7 @@ class RedditPostsTestCase(unittest.TestCase):
             })
         posts, _ = self.create_posts_instance(df)
         subreddits = set(posts.get_ranked_subreddits())
-        self.assertEquals({'democrats', 'Conservative'}, subreddits)
+        self.assertEqual({'democrats', 'Conservative'}, subreddits)
 
     def test_not_ranked_subreddits(self):
         df = pd.DataFrame(
@@ -130,7 +130,7 @@ class RedditPostsTestCase(unittest.TestCase):
             })
         posts, _ = self.create_posts_instance(df)
         subreddits = set(posts.get_ranked_subreddits())
-        self.assertEquals({'democrats'}, subreddits)
+        self.assertEqual({'democrats'}, subreddits)
 
     def test_truncate_dataset(self):
         df = pd.DataFrame(
