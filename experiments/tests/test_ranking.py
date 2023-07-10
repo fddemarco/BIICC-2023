@@ -1,5 +1,6 @@
 import pathlib
 import unittest
+import pytest
 from experiments.ranking import Ranking, calc_rbo
 import scipy
 
@@ -157,15 +158,19 @@ class RankingTestCase(unittest.TestCase):
             dpi=300,
             bbox_inches='tight')
 
+    @pytest.mark.slow
     def test_violin_plot(self):
         self.save_plot('violin_plot')
 
+    @pytest.mark.slow
     def test_bean_plot(self):
         self.save_plot('bean_plot')
 
+    @pytest.mark.slow
     def test_kde_plot(self):
         self.save_plot('kde_plot')
 
+    @pytest.mark.slow
     def test_auc_roc_plot(self):
         self.save_plot('roc_auc_plot')
 

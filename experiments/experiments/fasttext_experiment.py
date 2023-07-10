@@ -4,9 +4,9 @@ import pyarrow.dataset as ds
 import pandas as pd
 import pathlib
 
-import dimension_generator as dg
-import reddit_posts as ps
-import ranking as rk
+import experiments.dimension_generator as dg
+import experiments.reddit_posts as ps
+import experiments.ranking as rk
 
 
 def mkdir_if_not_exists(_dir):
@@ -19,9 +19,9 @@ class FasttextExperiment:
     def __init__(self, year, working_dir, results_dir, post_type, dataset):
         self.year = str(year)
         self.working_dir = pathlib.Path(working_dir)
-        self.results_folder = results_dir
+        self.results_folder = str(results_dir)
         self.post_type = post_type
-        self.dataset = dataset
+        self.dataset = str(dataset)
 
     @property
     def base_dataset_dir(self):

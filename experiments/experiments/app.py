@@ -1,62 +1,65 @@
-import click
+from enum import Enum
+
+import typer
+from typing_extensions import Annotated
+from pathlib import Path
+
 from experiments.fasttext_experiment import FasttextExperiment
 from experiments.posts_type import Submissions, Comments
 
 
-@click.command()
-@click.option("-t", "--posts-type", "posts_type",
-              help="Specify the type of Reddit posts to process: submissions / comments",
-              type=click.Choice(['submissions', 'comments']),
-              default='submissions'
-              )
-@click.option("--from", "_from",
-              help="Specify the start year of the posts to process (2012-2018)",
-              type=click.IntRange(2012, 2018),
-              default=2012
-              )
-@click.option("--to", "_to",
-              help="Specify the end year of the posts to process (2012-2018)",
-              type=click.IntRange(2012, 2018),
-              default=2018
-              )
-@click.option("-wd", "--working-dir", "working_dir",
-              help="Specify the working directory",
-              type=click.Path(exists=True, readable=True, writable=True),
-              default='.'
-              )
-@click.option("-e", "--execute-command", "command",
-              help="Execute a specified command",
-              type=click.Choice(['texts', 'truncate', 'embeddings', 'compare']),
-              default='~/Downloads/fastText-0.9.2/fasttext'
-              )
-@click.option("-o", "--results-output", "results_dir",
-              help="Results folder name",
-              default='results'
-              )
-@click.option("-d", "--dataset", "dataset",
-              help="Dataset folder name",
-              type=click.Choice(['original', 'truncated']),
-              default='original'
-              )
-def app(posts_type: str,
-        _from: int,
-        _to: int,
-        working_dir: str,
-        command: str,
-        results_dir: str,
-        dataset: str,
-        ) -> None:
+class Options(str, Enum):
+    def __str__(self):
+        return self.value
+
+
+class Types(Options):
+    submissions = "submissions"
+    comments = "comments"
+
+
+class Dataset(Options):
+    original = "original"
+    truncated = "truncated"
+
+
+class OutputDir(Options):
+    results = "results"
+    pretrained = "pretrained"
+
+
+class Command(Options):
+    texts = 'texts'
+    truncate = 'truncate'
+    embeddings = 'embeddings'
+    compare = 'compare'
+
+
+app = typer.Typer()
+
+
+@app.command()
+def main(working_dir: Annotated[Path,
+         typer.Argument(help='Working directory.')],
+         command: Annotated[Command,
+         typer.Argument(help='Command to process.')],
+         posts_type: Annotated[Types,
+         typer.Argument(help='Reddit posts type to process (comments/submissions)')] = Types.submissions,
+         _from: Annotated[int,
+         typer.Argument(help='Start year of the posts (a value between 2012 and 2018)',
+                        min=2012,
+                        max=2018)] = 2012,
+         _to: Annotated[int,
+         typer.Argument(help='End year of the posts (a value between 2012 and 2018)',
+                        min=2012,
+                        max=2018)] = 2018,
+         results_dir: Annotated[OutputDir,
+         typer.Argument(help='Results folder name.')] = OutputDir.results,
+         dataset: Annotated[Dataset,
+         typer.Argument(help='Dataset folder name.')] = Dataset.original,
+         ):
     """
-    Process a specific Reddit POSTS TYPE (submissions or comments) for a given YEAR.
-    \f
-    :param posts_type: Reddit posts type to process (comments/submissions)
-    :param _from: Start year of the posts (a value between 2012 and 2018)
-    :param _to: End year of the posts (a value between 2012 and 2018)
-    :param working_dir: Working directory.
-    :param command: Command to process.
-    :param results_dir: Results folder name.
-    :param dataset: Dataset folder name.
-    :return: None
+    Process a specific Reddit POSTS TYPE (submissions or comments) for a give range of YEARs.
     """
     if posts_type == "submissions":
         post_type = Submissions()
