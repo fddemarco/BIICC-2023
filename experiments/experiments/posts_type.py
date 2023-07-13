@@ -1,23 +1,43 @@
+"""
+    Reddit post types
+"""
+
+
 class PostsType:
-    def texts_from(self, reddit_posts, df):
+    """
+        Abstract class for posts type
+    """
+    def texts_from(self, reddit_posts, data):
+        """
+            Double-dispatch for getting text from data
+        """
         raise NotImplementedError('Should be implemented in a subclass.')
 
-    def dataset_type(self, experiment):
+    def posts_type(self, experiment):
+        """
+            Double-dispatch for getting corresponding dataset folder
+            name based on posts type
+        """
         raise NotImplementedError('Should be implemented in a subclass.')
 
 
 class Submissions(PostsType):
-    def texts_from(self, reddit_posts, df):
-        return reddit_posts.submissions_text(df)
+    """
+        Submissions Posts type
+    """
+    def texts_from(self, reddit_posts, data):
+        return reddit_posts.submissions_text(data)
 
-    def dataset_type(self, experiment):
+    def posts_type(self, experiment):
         return experiment.submissions_dataset
 
 
 class Comments(PostsType):
-    def texts_from(self, reddit_posts, df):
-        return reddit_posts.comments_text(df)
+    """
+        Comments Posts type
+    """
+    def texts_from(self, reddit_posts, data):
+        return reddit_posts.comments_text(data)
 
-    def dataset_type(self, experiment):
+    def posts_type(self, experiment):
         return experiment.comments_dataset
-
