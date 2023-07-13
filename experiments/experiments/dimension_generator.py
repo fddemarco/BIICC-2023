@@ -17,7 +17,7 @@ def score_embedding(vectors, dimensions):
 
 class DimensionGenerator:
     """Dimension Generator class"""
-    def __init__(self, vectors, nn=10):
+    def __init__(self, vectors, nn_n=10):
         self.vectors = vectors
 
         self.name_mapping = {name.lower(): name for name in self.vectors.index}
@@ -31,7 +31,6 @@ class DimensionGenerator:
         rows_i = np.array([])
         cols_i = np.array([])
 
-        nn_n = nn
         total_dir = 0
         for i in range(0, len(cosine_sims)):
             v = cosine_sims[i].argsort().argsort()
@@ -62,8 +61,8 @@ class DimensionGenerator:
     def generate_dimension_from_seeds(self, seeds):
         """Generates single dimension from seeds"""
 
-        seed_directions = self.vectors.loc[map(lambda x: x[1], seeds)].values - \
-                          self.vectors.loc[map(lambda x: x[0], seeds)].values
+        seed_directions = (self.vectors.loc[map(lambda x: x[1], seeds)].values -
+                           self.vectors.loc[map(lambda x: x[0], seeds)].values)
 
         seed_similarities = np.dot(self.directions_to_score, seed_directions.T)
         seed_similarities = np.amax(seed_similarities, axis=1)
