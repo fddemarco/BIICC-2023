@@ -2,7 +2,6 @@
 CLI is defined in this module.
 """
 
-from enum import Enum
 from pathlib import Path
 
 from typing_extensions import Annotated
@@ -10,49 +9,12 @@ import typer
 
 
 from experiments.fasttext_experiment import FasttextExperiment
-from experiments.posts_type import Submissions, Comments
+from experiments.options import Command, Types, ResultDir, Dataset
 
 
-class Options(str, Enum):
-    """
-    Options class type for CLI argument
-    """
-    def __str__(self):
-        return self.value
-
-
-class Types(Options):
-    """
-    Reddit Posts type for CLI argument
-    """
-    SUBMISSIONS = "submissions"
-    COMMENTS = "comments"
-
-
-class Dataset(Options):
-    """
-    Posts Dataset type for CLI argument
-    """
-    ORIGINAL = "original"
-    TRUNCATED = "truncated"
-
-
-class OutputDir(Options):
-    """
-    Output directory type for CLI argument
-    """
-    RESULTS = "results"
-    PRETRAINED = "pretrained"
-
-
-class Command(Options):
-    """
-    Command type for CLI argument
-    """
-    TEXTS = 'texts'
-    TRUNCATE = 'truncate'
-    EMBEDDINGS = 'embeddings'
-    COMPARE = 'compare'
+def range_help():
+    """Help message for 'from' and 'to' arguments"""
+    return 'Year between 2012 and 2018'
 
 
 app = typer.Typer()
@@ -60,48 +22,35 @@ app = typer.Typer()
 
 @app.command()
 def main(working_dir: Annotated[Path,
-         typer.Argument(help='Working directory.')],
+                                typer.Argument(help='Working directory')],
          command: Annotated[Command,
-         typer.Argument(help='Command to process.')],
+                            typer.Argument(help=Command.help_message())],
          posts_type: Annotated[Types,
-         typer.Argument(
-             help='Reddit posts type to process (comments/submissions)')] = Types.SUBMISSIONS,
+                               typer.Argument(
+                                 help=Types.help_message())] = Types.SUBMISSIONS,
          _from: Annotated[int,
-         typer.Argument(help='Start year of the posts (a value between 2012 and 2018)',
-                        min=2012,
-                        max=2018)] = 2012,
+                          typer.Argument(help=range_help(),
+                                         min=2012,
+                                         max=2018)] = 2012,
          _to: Annotated[int,
-         typer.Argument(help='End year of the posts (a value between 2012 and 2018)',
-                        min=2012,
-                        max=2018)] = 2018,
-         results_dir: Annotated[OutputDir,
-         typer.Argument(help='Results folder name.')] = OutputDir.RESULTS,
+                        typer.Argument(help=range_help(),
+                                       min=2012,
+                                       max=2018)] = 2018,
+         results_dir: Annotated[ResultDir,
+                                typer.Argument(help=ResultDir.help_message())] = ResultDir.RESULTS,
          dataset: Annotated[Dataset,
-         typer.Argument(help='Dataset folder name.')] = Dataset.ORIGINAL,
+                            typer.Argument(help=Dataset.help_message())] = Dataset.ORIGINAL,
          ):
     """
-    Process a specific Reddit POSTS TYPE (submissions or comments) for a give range of YEARs.
+    Apply a COMMAND over a Reddit POSTS TYPE DATASET for a given range of YEARs.
     """
-    if posts_type == "submissions":
-        post_type = Submissions()
-    else:
-        post_type = Comments()
 
     for year in range(_from, _to+1):
         experiment = FasttextExperiment(
             year,
             working_dir,
             results_dir,
-            post_type,
+            posts_type.to_model(),
             dataset
         )
-        if command == Command.TEXTS:
-            experiment.generate_texts()
-        elif command == Command.TRUNCATE:
-            experiment.generate_truncated_texts()
-        elif command == Command.EMBEDDINGS:
-            experiment.save_embeddings_to_csv()
-        elif command == Command.COMPARE:
-            experiment.compare_rankings()
-        else:
-            raise ValueError("Invalid command.")
+        command.apply(experiment)

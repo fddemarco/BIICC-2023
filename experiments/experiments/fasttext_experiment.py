@@ -57,11 +57,11 @@ class FasttextExperiment:
     def embedding_pathname(self):
         return self.results_dir / 'embeddings.csv'
 
-    def generate_texts(self):
+    def apply_texts(self):
         reddit_posts = self.get_reddit_posts()
         reddit_posts.generate_text()
 
-    def generate_truncated_texts(self):
+    def apply_truncate(self):
         reddit_posts = self.get_reddit_posts()
         df = reddit_posts.truncate_dataset()
         df.to_parquet(self.truncated_data_pathname / 'truncated_data.parquet')
@@ -75,7 +75,7 @@ class FasttextExperiment:
         with open(self.subreddits_pathname, 'a') as f:
             f.write(text + '\n')
 
-    def save_embeddings_to_csv(self):
+    def apply_embeddings(self):
         model_pathname = str(self.fasttext_model_pathname.absolute())
         model = fasttext.load_model(model_pathname)
         reddit_posts = self.get_reddit_posts()
@@ -89,7 +89,7 @@ class FasttextExperiment:
         scores = dg.score_embedding(df, zip([self.dem_rep_field], dimensions))
         return scores
 
-    def compare_rankings(self):
+    def apply_compare(self):
         fasttext_ranking = self.get_fasttext_scores().to_dict()[self.dem_rep_field]
         ranking = rk.Ranking(fasttext_ranking)
         metrics = ranking.compare_ranking()
