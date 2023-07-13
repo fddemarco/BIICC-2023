@@ -1,3 +1,6 @@
+"""
+    Module for CLI Arguments Classes
+"""
 from enum import Enum
 from experiments.posts_type import Submissions, Comments
 
@@ -8,6 +11,9 @@ class Options(str, Enum):
     """
     @classmethod
     def help_message(cls: type) -> str:
+        """
+         Returns help message for CLI argument
+        """
         raise NotImplementedError('Should be implemented in a subclass')
 
     def __str__(self):
@@ -26,10 +32,12 @@ class Types(Options):
         return 'Reddit posts type to process'
 
     def to_model(self):
+        """
+            Returns corresponding model object
+        """
         if self.value == self.SUBMISSIONS:
             return Submissions()
-        else:
-            return Comments()
+        return Comments()
 
 
 class Dataset(Options):
@@ -70,6 +78,9 @@ class Command(Options):
         return 'Command to process'
 
     def apply(self, experiment):
+        """
+            Apply corresponding command to given experiment
+        """
         if self == Command.TEXTS:
             experiment.apply_texts()
         elif self == Command.TRUNCATE:
