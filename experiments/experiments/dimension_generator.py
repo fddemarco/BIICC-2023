@@ -1,9 +1,12 @@
+""" Dimension generator script used in Waller et al"""
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
 
 def score_embedding(vectors, dimensions):
+    """Calculate score for embeddings over dimensions"""
     columns = {}
 
     for name, data in dimensions:
@@ -13,7 +16,7 @@ def score_embedding(vectors, dimensions):
 
 
 class DimensionGenerator:
-
+    """Dimension Generator class"""
     def __init__(self, vectors, nn=10):
         self.vectors = vectors
 
@@ -48,13 +51,16 @@ class DimensionGenerator:
             index.append((comm_names[c1], comm_names[c2]))
             directions.append(self.vectors.iloc[c2] - self.vectors.iloc[c1])
 
-        print("%d valid directions, %d calculated." % (total_dir, len(directions)))
-        self.directions_to_score = pd.DataFrame(index=pd.MultiIndex.from_tuples(index), data=directions)
+        print(f"{total_dir} valid directions, {len(directions)} calculated.")
+        self.directions_to_score = pd.DataFrame(
+            index=pd.MultiIndex.from_tuples(index), data=directions)
 
     def generate_dimensions_from_seeds(self, seeds):
+        """Generates multiple dimensions from seeds"""
         return list(map(lambda x: self.generate_dimension_from_seeds([x]), seeds))
 
     def generate_dimension_from_seeds(self, seeds):
+        """Generates single dimension from seeds"""
 
         seed_directions = self.vectors.loc[map(lambda x: x[1], seeds)].values - \
                           self.vectors.loc[map(lambda x: x[0], seeds)].values
@@ -76,7 +82,8 @@ class DimensionGenerator:
             l0 = directions.index.get_level_values(0)
             l1 = directions.index.get_level_values(1)
             directions = directions[
-                (np.arange(0, len(directions)) <= i) | ((~l0.isin(ban_list)) & (~l1.isin(ban_list)))]
+                (np.arange(0, len(directions)) <= i) |
+                ((~l0.isin(ban_list)) & (~l1.isin(ban_list)))]
 
             i += 1
 
