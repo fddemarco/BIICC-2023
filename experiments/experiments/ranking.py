@@ -40,13 +40,24 @@ class Ranking:
         self.ranking = ranking
 
     def compare_ranking(self):
-        classification_metrics = {
-            'Precision': self.precision_score(),
-            'Recall': self.recall_score(),
-            'F1 Score': self.f1_score()
+        classification_metrics = self.evaluate_classification_metrics()
+        ranking_metrics = self.evaluate_ranking_metrics()
+        plots = self.generate_plots()
+
+        Metrics = namedtuple("Metrics", "classification_metrics ranking_metrics plots")
+        return Metrics(classification_metrics, ranking_metrics, plots)
+
+    def generate_plots(self):
+        return {
+            'bump': self.bump_plot(),
+            'kde': self.kde_plot(),
+            'violin': self.violin_plot(),
+            'bean': self.bean_plot(),
+            'roc_auc': self.roc_auc_plot()
         }
 
-        ranking_metrics = {
+    def evaluate_ranking_metrics(self):
+        return {
             'Kendall Tau': [self.kendall_score()],
             'Classic RBO': [self.rbo_score()],
             'Two way RBO': [self.two_way_rbo_score()],
@@ -55,16 +66,12 @@ class Ranking:
             'T Student - p-value': [self.t_student_p_value()]
         }
 
-        plots = {
-            'bump': self.bump_plot(),
-            'kde': self.kde_plot(),
-            'violin': self.violin_plot(),
-            'bean': self.bean_plot(),
-            'roc_auc': self.roc_auc_plot()
+    def evaluate_classification_metrics(self):
+        return {
+            'Precision': self.precision_score(),
+            'Recall': self.recall_score(),
+            'F1 Score': self.f1_score()
         }
-
-        Metrics = namedtuple("Metrics", "classification_metrics ranking_metrics plots")
-        return Metrics(classification_metrics, ranking_metrics, plots)
 
     # Classification metrics
 
