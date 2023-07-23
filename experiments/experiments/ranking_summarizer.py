@@ -9,10 +9,9 @@ class InvalidMetrics(ValueError):
 
 
 class RankingSummarizer:
-    def __init__(self, results, model=None, year=None):
-        self.validate_input(model, results, year)
-        data = pd.DataFrame(results)
-        self.data = self.normalize_data(data)
+    def __init__(self, data, model=None, year=None):
+        self.validate_input(model, data, year)
+        self.data = pd.DataFrame(data)
 
     def validate_input(self, model, results, year):
         if model is None or year is None:
@@ -33,19 +32,18 @@ class RankingSummarizer:
     def model_field(self):
         return 'model'
 
-    def normalize_data(self, data):
-        data = data.sort_values([self.model_field, self.year_field])
-        return data.reset_index(drop=True)
+    def normalize_data(self):
+        data = self.data.sort_values([self.model_field, self.year_field])
+        return data.reset_index(drop=True).round(2)
 
     def union(self, summary):
         return RankingSummarizer(summary.concat(self.data))
 
     def concat(self, data):
-        concat_data = pd.concat([self.data, data])
-        return self.normalize_data(concat_data)
+        return pd.concat([self.data, data])
 
     def to_pandas(self):
-        return self.data
+        return self.normalize_data()
 
     def __eq__(self, other):
         return other.equals_to(self.data)

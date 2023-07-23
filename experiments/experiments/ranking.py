@@ -62,8 +62,8 @@ class Ranking:
             'Classic RBO': [self.rbo_score()],
             'Two way RBO': [self.two_way_rbo_score()],
             'H&H RBO': [self.half_and_half_rbo_score()],
-            'ROC AUC': [self.roc_auc_score()],
-            'T Student - p-value': [self.t_student_p_value()]
+            'AUC ROC': [self.roc_auc_score()],
+            'p-value': [self.t_student_p_value()]
         }
 
     def evaluate_classification_metrics(self):
@@ -349,7 +349,7 @@ def arxiv_waller_labels():
 
 
 def arxiv_waller_ranking():
-    return arxiv_waller_labels().keys()
+    return list(arxiv_waller_labels().keys())
 
 
 def arxiv_waller_ranking_for(subreddits):

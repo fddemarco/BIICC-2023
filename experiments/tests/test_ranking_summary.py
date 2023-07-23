@@ -5,7 +5,7 @@ import pandas as pd
 import pandas.testing as pdt
 
 from experiments.ranking import Ranking
-from experiments.ranking_summary import RankingSummarizer, InvalidMetrics
+from experiments.ranking_summarizer import RankingSummarizer, InvalidMetrics
 
 
 def ranking_metrics():
