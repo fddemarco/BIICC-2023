@@ -13,9 +13,9 @@ class RedditPosts:
     def from_comments(cls, dataset, env):
         return cls(dataset, env, Comments())
 
-    def __init__(self, dataset, env, post_type):
+    def __init__(self, dataset, sink, post_type):
         self.dataset = dataset
-        self.sink = env
+        self.sink = sink
         self.post_type = post_type
 
     @property
