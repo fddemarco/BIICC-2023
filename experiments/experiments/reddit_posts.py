@@ -125,7 +125,7 @@ class RedditPosts:
         filter_condition = ds.field(self.subreddit_field).isin(subreddits)
         filtered_dataset = self.dataset.filter(filter_condition)
         df = filtered_dataset.to_table().to_pandas()
-        df[self.text_field] = self.texts_from(df)
+        df[self.text_field] = self.texts_from(df)  # Falta ignorar aquellos comentarios sin texto
         return df
 
     def texts_by_subreddit(self, df):
