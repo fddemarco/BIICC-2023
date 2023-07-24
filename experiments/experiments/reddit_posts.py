@@ -109,8 +109,8 @@ class RedditPosts:
 
     def truncate_subreddit(self, df, text_len_threshold):
         df.sort_values(self.score_field, ascending=False)
-        text_len = df[self.text_field].str.len()
-        df = df[text_len < text_len_threshold]
+        text_len = df[self.text_field].str.len()  # No funciona correctamente
+        df = df[text_len < text_len_threshold]    # porque no toma en cuenta los espacios del join
 
         cumulative_len = df[self.text_field].str.len().cumsum()
         df = df[cumulative_len < text_len_threshold]
