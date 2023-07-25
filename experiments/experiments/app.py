@@ -8,7 +8,7 @@ from typing_extensions import Annotated
 import typer
 
 
-from experiments.fasttext_experiment import FasttextExperiment
+from experiments.fasttext_experiment import Experiment
 from experiments.options import Command, Types, ResultDir, Dataset
 
 
@@ -46,7 +46,7 @@ def main(working_dir: Annotated[Path,
     """
 
     for year in range(_from, _to+1):
-        experiment = FasttextExperiment(
+        experiment = Experiment(
             year,
             working_dir,
             results_dir,

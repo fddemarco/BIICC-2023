@@ -20,7 +20,7 @@ def _mkdir_if_not_exists(_dir):
     return _dir
 
 
-class FasttextExperiment:
+class Experiment:
     """
         Experiments Class
     """
@@ -116,7 +116,7 @@ class FasttextExperiment:
         tf_idf = reddit_posts.generate_embeddings_for(model)
         tf_idf.to_csv(self._embedding_pathname)
 
-    def get_fasttext_scores(self, data, seeds=None) -> pd.DataFrame:
+    def get_scores(self, data, seeds=None) -> pd.DataFrame:
         """
             Generates scores from DATA using SEEDS
         """
@@ -136,7 +136,7 @@ class FasttextExperiment:
             Plots include: bump chart, ROC AUC, violin plot, kde plot
         """
         data = pd.read_csv(self._embedding_pathname, index_col=0)
-        fasttext_ranking = (self.get_fasttext_scores(data).to_dict(orient='dict'))[self._dem_rep_field]
+        fasttext_ranking = (self.get_scores(data).to_dict(orient='dict'))[self._dem_rep_field]
         ranking = rk.Ranking(fasttext_ranking)
         metrics = ranking.compare_ranking()
 
