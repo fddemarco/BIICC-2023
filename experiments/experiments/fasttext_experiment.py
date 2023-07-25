@@ -116,10 +116,12 @@ class FasttextExperiment:
         tf_idf = reddit_posts.generate_embeddings_for(model)
         tf_idf.to_csv(self._embedding_pathname)
 
-    def _get_fasttext_scores(self) -> pd.DataFrame:
+    def _get_fasttext_scores(self, seeds=None) -> pd.DataFrame:
+        if seeds is None:
+            seeds = [("democrats", "Conservative")]
         data = pd.read_csv(self._embedding_pathname, index_col=0)
         generator = dg.DimensionGenerator(data)
-        dimensions = generator.generate_dimensions_from_seeds([("democrats", "Conservative")])
+        dimensions = generator.generate_dimensions_from_seeds(seeds)
         scores = dg.score_embedding(data, zip([self._dem_rep_field], dimensions))
         return scores
 

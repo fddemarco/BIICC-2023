@@ -40,7 +40,7 @@ class RankingTestCase(unittest.TestCase):
         summarizer = RankingSummarizer(metrics, '10k', 2012)
         self.assertEqual(2012, summarizer.to_pandas().year[0])
         self.assertEqual('10k', summarizer.to_pandas().model[0])
-        self.assertEqual(metrics['ROC AUC'][0], summarizer.to_pandas()['ROC AUC'][0])
+        self.assertEqual(metrics['AUC ROC'][0], summarizer.to_pandas()['AUC ROC'][0])
 
     def test_01(self):
         metrics = ranking_metrics()
