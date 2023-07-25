@@ -116,10 +116,12 @@ class FasttextExperiment:
         tf_idf = reddit_posts.generate_embeddings_for(model)
         tf_idf.to_csv(self._embedding_pathname)
 
-    def _get_fasttext_scores(self, seeds=None) -> pd.DataFrame:
+    def get_fasttext_scores(self, data, seeds=None) -> pd.DataFrame:
+        """
+            Generates scores from DATA using SEEDS
+        """
         if seeds is None:
             seeds = [("democrats", "Conservative")]
-        data = pd.read_csv(self._embedding_pathname, index_col=0)
         generator = dg.DimensionGenerator(data)
         dimensions = generator.generate_dimensions_from_seeds(seeds)
         scores = dg.score_embedding(data, zip([self._dem_rep_field], dimensions))
@@ -133,7 +135,8 @@ class FasttextExperiment:
             Metrics include: RBO, Kendall Tau, T-Standard p-value, ROC AUC
             Plots include: bump chart, ROC AUC, violin plot, kde plot
         """
-        fasttext_ranking = (self._get_fasttext_scores().to_dict(orient='dict'))[self._dem_rep_field]
+        data = pd.read_csv(self._embedding_pathname, index_col=0)
+        fasttext_ranking = (self.get_fasttext_scores(data).to_dict(orient='dict'))[self._dem_rep_field]
         ranking = rk.Ranking(fasttext_ranking)
         metrics = ranking.compare_ranking()
 
