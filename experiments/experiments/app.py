@@ -8,7 +8,7 @@ from typing_extensions import Annotated
 import typer
 
 
-from experiments.fasttext_experiment import Experiment
+from experiments.experiment import Experiment
 from experiments.options import Command, Types, ResultDir, Dataset
 
 

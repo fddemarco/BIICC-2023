@@ -32,7 +32,16 @@ def split_and_reverse(n, ranking):
     return half_ranking
 
 
+def dem_rep_field():
+    return 'dem_rep'
+
+
 class Ranking:
+    @classmethod
+    def from_pandas(cls, score_data):
+        score_data = score_data.to_dict(orient='dict')[dem_rep_field()]
+        return cls(score_data)
+
     def __init__(self, ranking: dict):
         """
             :param ranking: Para cada subreddit, nos dice su score. {'Conservative': -0.228}
@@ -369,7 +378,7 @@ def bump_chart(elements, n):
         )
         ax.annotate(
             element["Subreddit"],
-            xy=("fasttext", element["Rank"][1]),
+            xy=("predicted", element["Rank"][1]),
             xytext=(1.01, element["Rank"][1])
         )
         ax.annotate(

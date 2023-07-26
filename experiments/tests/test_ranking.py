@@ -1,5 +1,7 @@
 import pathlib
 import unittest
+
+import pandas as pd
 import pytest
 from experiments.ranking import Ranking, calc_rbo
 import scipy
@@ -183,6 +185,11 @@ class RankingTestCase(unittest.TestCase):
         ranking = complete_ranking()
         p_value = ranking.t_student_p_value()
         self.assertAlmostEqual(1.6477894923155955e-06, p_value)
+
+    def test_from_pandas(self):
+        ranking = Ranking.from_pandas(pd.DataFrame({'dem_rep': [-2, 2]}, index=['democrats', 'Conservative']))
+        score = ranking.roc_auc_score()
+        self.assertAlmostEqual(1.0, score)
 
 
 if __name__ == '__main__':
