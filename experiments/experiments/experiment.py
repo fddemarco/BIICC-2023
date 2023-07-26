@@ -136,8 +136,8 @@ class Experiment:
             Plots include: bump chart, ROC AUC, violin plot, kde plot
         """
         data = pd.read_csv(self._embedding_pathname, index_col=0)
-        fasttext_ranking = (self.get_scores(data).to_dict(orient='dict'))[self._dem_rep_field]
-        ranking = rk.Ranking(fasttext_ranking)
+        ranking_scores = (self.get_scores(data).to_dict(orient='dict'))[self._dem_rep_field]
+        ranking = rk.Ranking(ranking_scores)
         metrics = ranking.compare_ranking()
 
         self._save_metrics(metrics.classification_metrics, 'classification_metrics.csv')
