@@ -18,7 +18,7 @@ def leaning_left(z_score):
     return z_score < -1
 
 
-def calc_rbo(predicted_ranking, true_ranking):
+def calc_rbo(predicted_ranking, true_ranking, p=0.5):  # TODO: Seleccionar un p
     return rbo.RankingSimilarity(true_ranking, predicted_ranking).rbo()
 
 
@@ -235,7 +235,7 @@ class Ranking:
         with sns.plotting_context("paper"):
             return bump_chart(rankings, len(waller_ranking))
 
-    def violin_plot(self):
+    def violin_plot(self, title=None):
         df = pd.DataFrame(
             {'dem_rep': self.scores(),
              'subreddit': self.subreddits(),
@@ -244,7 +244,9 @@ class Ranking:
         )
         with sns.plotting_context("paper"):
             fig, axis = plt.subplots()
-            sns.violinplot(data=df, y='dem_rep', x='political party', inner='stick', ax=axis)
+            sns.violinplot(data=df, y='dem_rep', x='political party',
+                           order=[democrat_label(), conservative_label()], inner='stick', ax=axis)
+            axis.set_title(title)
             return fig
 
     def kde_plot(self):

@@ -14,6 +14,8 @@
   * Kendall Tau. <https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient>
   * Pearson's Correlation. <https://en.wikipedia.org/wiki/Pearson_correlation_coefficient>
 
+* https://towardsdatascience.com/rbo-v-s-kendall-tau-to-compare-ranked-lists-of-items-8776c5182899
+
 ## Métricas para rankings
 
 Las medidas de evaluación para un sistema de recuperación de información (IR, por sus siglas en inglés) evalúan qué tan bien un índice, motor de búsqueda o base de datos devuelve resultados de una colección de recursos que satisfacen la consulta de un usuario. Por lo tanto, son fundamentales para el éxito de los sistemas de información y plataformas digitales. El éxito de un sistema de IR puede ser juzgado por una serie de criterios, incluyendo la relevancia, la velocidad, la satisfacción del usuario, la usabilidad, la eficiencia y la confiabilidad. Sin embargo, el factor más importante para determinar la eficacia de un sistema para los usuarios es la relevancia general de los resultados recuperados en respuesta a una consulta. Las medidas de evaluación pueden ser categorizadas de varias formas, incluyendo offline o en línea, basadas en el usuario o en el sistema, e incluyen métodos como el comportamiento observado del usuario, colecciones de pruebas, precisión y recuperación, y puntuaciones de conjuntos de pruebas de referencia preparados.
