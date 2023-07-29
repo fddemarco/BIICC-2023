@@ -1,36 +1,26 @@
 import pathlib
 import unittest
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from experiments.ranking import Ranking, calc_rbo
-import scipy
+from experiments.ranking import Ranking, calc_rbo, arxiv_waller_scores
 
 
-def complete_ranking():
-    return Ranking(
-        {
-            'democrats': -10,
-            'EnoughLibertarianSpam': -9,
-            'hillaryclinton': -8,
-            'progressive': -7,
-            'BlueMidterm2018': -6,
-            'EnoughHillHate': -5,
-            'Enough_Sanders_Spam': -4,
-            'badwomensanatomy': -3,
-            'racism': -2,
-            'GunsAreCool': 1,
-            'Christians': -1,
-            'The_Farage': 2,
-            'new_right': 3,
-            'conservatives': 4,
-            'metacanada': 5,
-            'Mr_Trump': 6,
-            'NoFapChristians': 7,
-            'TrueChristian': 8,
-            'The_Donald': 9,
-            'Conservative': 10
-        })
+def waller_ranking():
+    return Ranking(arxiv_waller_scores())
+
+
+def reverse_waller_ranking():
+    subreddits = list(arxiv_waller_scores().keys())
+    scores = list(arxiv_waller_scores().values())
+    scores.reverse()
+    data = {s: scores[i] for i, s in enumerate(subreddits)}
+    return Ranking(data)
+
+
+def ranking_as_dataframe(data):
+    return pd.DataFrame(data, index=['democrats', 'Conservative'])
 
 
 class RankingTestCase(unittest.TestCase):
@@ -51,11 +41,11 @@ class RankingTestCase(unittest.TestCase):
         self.assertAlmostEqual(-1.0, ranking.kendall_score())
 
     def test_kendall5(self):
-        ranking = complete_ranking()
-        self.assertAlmostEqual(0.9894736842105263, ranking.kendall_score())
+        ranking = waller_ranking()
+        self.assertAlmostEqual(1.0, ranking.kendall_score())
 
-    def test_calc_rbo_sanity_1(self):
-        ranking = complete_ranking()
+    def test_calc_rbo_sanity_same_ranking(self):
+        ranking = waller_ranking()
         self.assertAlmostEqual(
             1.0,
             calc_rbo(
@@ -64,8 +54,8 @@ class RankingTestCase(unittest.TestCase):
             )
         )
 
-    def test_calc_rbo_sanity_2(self):
-        ranking = complete_ranking()
+    def test_calc_rbo_sanity_sub_chain(self):
+        ranking = waller_ranking()
         self.assertAlmostEqual(
             1.0,
             calc_rbo(
@@ -74,14 +64,14 @@ class RankingTestCase(unittest.TestCase):
             )
         )
 
-    def test_calc_rbo_sanity_3(self):
-        ranking = complete_ranking()
+    def test_calc_rbo_sanity_disjoint(self):
+        ranking = waller_ranking()
         predicted = ['fun 1', 'fun 2']
         self.assertAlmostEqual(
             0.0,
             calc_rbo(
                 predicted,
-                ranking.arxiv_waller_ranking()[:7]
+                ranking.arxiv_waller_ranking()
             )
         )
 
@@ -148,10 +138,9 @@ class RankingTestCase(unittest.TestCase):
             'BlueMidterm2018': 1
         })
         self.assertAlmostEqual(0.8, ranking.rbo_score())
-        print(scipy.__version__)
 
     def save_plot(self, plot_name):
-        ranking = complete_ranking()
+        ranking = waller_ranking()
         plot = getattr(ranking, plot_name)()
         path = pathlib.Path('plots')
         path.mkdir(exist_ok=True)
@@ -177,19 +166,29 @@ class RankingTestCase(unittest.TestCase):
         self.save_plot('roc_auc_plot')
 
     def test_auc_roc_score(self):
-        ranking = complete_ranking()
-        score = ranking.roc_auc_score()
-        self.assertAlmostEqual(0.99, score)
-
-    def test_t_student_p_value(self):
-        ranking = complete_ranking()
-        p_value = ranking.t_student_p_value()
-        self.assertAlmostEqual(1.6477894923155955e-06, p_value)
-
-    def test_from_pandas(self):
-        ranking = Ranking.from_pandas(pd.DataFrame({'dem_rep': [-2, 2]}, index=['democrats', 'Conservative']))
+        ranking = waller_ranking()
         score = ranking.roc_auc_score()
         self.assertAlmostEqual(1.0, score)
+
+    def test_t_student_p_value(self):
+        ranking = waller_ranking()
+        p_value = ranking.t_student_p_value()
+        self.assertAlmostEqual(0.0, p_value)
+
+    def test_from_pandas(self):
+        ranking = Ranking.from_pandas(ranking_as_dataframe({'dem_rep': [-2, 2]}))
+        score = ranking.roc_auc_score()
+        self.assertAlmostEqual(1.0, score)
+
+    def test_n_dcg_score_01(self):
+        ranking = waller_ranking()
+        self.assertAlmostEqual(1.0, ranking.n_dcg_score())
+
+    def test_n_dcg_sanity(self):
+        with patch('experiments.ranking.arxiv_waller_scores') as mocked_function:
+            mocked_function.return_value = {'s1': 10, 's2': 0, 's3': 0, 's4': 1, 's5': 5}
+            ranking = Ranking({'s1': .1, 's2': .2, 's3': .3, 's4': 4, 's5': 70})
+            self.assertAlmostEqual(0.6956940443813076, ranking.n_dcg_score())
 
 
 if __name__ == '__main__':
