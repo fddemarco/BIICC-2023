@@ -73,7 +73,7 @@ class Ranking:
             'Two way RBO': [self.two_way_rbo_score()],
             'H&H RBO': [self.half_and_half_rbo_score()],
             'AUC ROC': [self.roc_auc_score()],
-            'p-value': [self.t_student_p_value()]
+            'nDCG': [self.n_dcg_score()]
         }
 
     def evaluate_classification_metrics(self):
