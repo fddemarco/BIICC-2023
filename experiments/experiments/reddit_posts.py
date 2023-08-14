@@ -6,12 +6,12 @@ from .posts_type import Submissions, Comments
 
 class RedditPosts:
     @classmethod
-    def from_submissions(cls, dataset, env):
-        return cls(dataset, env, Submissions())
+    def from_submissions(cls, dataset, sink):
+        return cls(dataset, sink, Submissions())
 
     @classmethod
-    def from_comments(cls, dataset, env):
-        return cls(dataset, env, Comments())
+    def from_comments(cls, dataset, sink):
+        return cls(dataset, sink, Comments())
 
     def __init__(self, dataset, sink, post_type):
         self.dataset = dataset
