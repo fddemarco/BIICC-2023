@@ -14,12 +14,6 @@ import experiments.reddit_posts as ps
 import experiments.ranking as rk
 
 
-def _mkdir_if_not_exists(_dir):
-    if not _dir.exists():
-        _dir.mkdir(parents=True)
-    return _dir
-
-
 class Experiment:
     """
         Experiments Class
@@ -46,12 +40,14 @@ class Experiment:
     @property
     def _truncated_data_pathname(self):
         truncated_dir = self._base_parent_dir / 'truncated'
-        return _mkdir_if_not_exists(truncated_dir)
+        truncated_dir.mkdir(parents=True, exist_ok=True)
+        return truncated_dir
 
     @property
     def _results_dir(self):
         results_dir = self._base_dataset_dir / self.results_folder
-        return _mkdir_if_not_exists(results_dir)
+        results_dir.mkdir(parents=True, exist_ok=True)
+        return results_dir
 
     def _result_path(self, filename):
         return self._results_dir / filename
