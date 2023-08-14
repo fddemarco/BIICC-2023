@@ -5,16 +5,6 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-def score_embedding(vectors, dimensions):
-    """Calculate score for embeddings over dimensions"""
-    columns = {}
-
-    for name, data in dimensions:
-        columns[name] = np.dot(vectors.values, data["vector"] / np.linalg.norm(data["vector"]))
-
-    return pd.DataFrame(columns, index=vectors.index)
-
-
 class DimensionGenerator:
     """Dimension Generator class"""
     def __init__(self, vectors, nn_n=10):
@@ -102,3 +92,13 @@ class DimensionGenerator:
             "left_comms": list(map(lambda x: x[0], direction_group.index)),
             "right_comms": list(map(lambda x: x[1], direction_group.index)),
         }
+
+    def get_scores_from_seeds(self, names, seeds):
+        """Calculate score for embeddings over dimensions"""
+        columns = {}
+
+        dimensions = self.generate_dimension_from_seeds(seeds)
+        for name, data in zip(names, dimensions):
+            columns[name] = np.dot(self.vectors.values, data["vector"] / np.linalg.norm(data["vector"]))
+
+        return pd.DataFrame(columns, index=self.vectors.index)

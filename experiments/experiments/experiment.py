@@ -123,9 +123,7 @@ class Experiment:
         if seeds is None:
             seeds = [("democrats", "Conservative")]
         generator = dg.DimensionGenerator(data)
-        dimensions = generator.generate_dimensions_from_seeds(seeds)
-        scores = dg.score_embedding(data, zip([self._dem_rep_field], dimensions))
-        return scores
+        return generator.get_scores_from_seeds([self._dem_rep_field], seeds)
 
     def apply_compare(self):
         """
