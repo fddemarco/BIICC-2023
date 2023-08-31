@@ -5,26 +5,28 @@
 
 class PostsType:
     """
-        Abstract class for posts type
+    Abstract class for posts type
     """
+
     def texts_from(self, reddit_posts, data):
         """
-            Double-dispatch for getting text from data
+        Double-dispatch for getting text from data
         """
-        raise NotImplementedError('Should be implemented in a subclass.')
+        raise NotImplementedError("Should be implemented in a subclass.")
 
     def posts_type(self, experiment):
         """
-            Double-dispatch for getting corresponding dataset folder
-            name based on posts type
+        Double-dispatch for getting corresponding dataset folder
+        name based on posts type
         """
-        raise NotImplementedError('Should be implemented in a subclass.')
+        raise NotImplementedError("Should be implemented in a subclass.")
 
 
 class Submissions(PostsType):
     """
-        Submissions Posts type
+    Submissions Posts type
     """
+
     def texts_from(self, reddit_posts, data):
         return reddit_posts.submissions_text(data)
 
@@ -34,8 +36,9 @@ class Submissions(PostsType):
 
 class Comments(PostsType):
     """
-        Comments Posts type
+    Comments Posts type
     """
+
     def texts_from(self, reddit_posts, data):
         return reddit_posts.comments_text(data)
 

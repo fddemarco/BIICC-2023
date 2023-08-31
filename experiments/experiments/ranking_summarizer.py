@@ -3,8 +3,9 @@ import pandas as pd
 
 class InvalidMetrics(ValueError):
     """
-        Metrics should include year of dataset and model used to generate the metrics
+    Metrics should include year of dataset and model used to generate the metrics
     """
+
     pass
 
 
@@ -15,10 +16,7 @@ class RankingSummarizer:
 
     def validate_input(self, model, results, year):
         if model is None or year is None:
-            if (
-                self.model_field not in results or
-                self.year_field not in results
-            ):
+            if self.model_field not in results or self.year_field not in results:
                 raise InvalidMetrics
         else:
             results[self.model_field] = [model]
@@ -26,11 +24,11 @@ class RankingSummarizer:
 
     @property
     def year_field(self):
-        return 'year'
+        return "year"
 
     @property
     def model_field(self):
-        return 'model'
+        return "model"
 
     def normalize_data(self):
         data = self.data.sort_values([self.model_field, self.year_field])

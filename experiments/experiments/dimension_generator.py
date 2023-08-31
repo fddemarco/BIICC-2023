@@ -7,6 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class DimensionGenerator:
     """Dimension Generator class"""
+
     def __init__(self, vectors, nn_n=10):
         self.vectors = vectors
 
@@ -25,7 +26,7 @@ class DimensionGenerator:
         for i in range(0, len(cosine_sims)):
             v = cosine_sims[i].argsort().argsort()
 
-            only_calculate_for = (v > (len(comm_names) - nn_n - 2))
+            only_calculate_for = v > (len(comm_names) - nn_n - 2)
             total_dir = total_dir + np.sum(only_calculate_for)
             cols = np.nonzero(only_calculate_for)
             cols_i = np.append(cols_i, cols[0])
@@ -42,7 +43,8 @@ class DimensionGenerator:
 
         print(f"{total_dir} valid directions, {len(directions)} calculated.")
         self.directions_to_score = pd.DataFrame(
-            index=pd.MultiIndex.from_tuples(index), data=directions)
+            index=pd.MultiIndex.from_tuples(index), data=directions
+        )
 
     def generate_dimensions_from_seeds(self, seeds):
         """Generates multiple dimensions from seeds"""
@@ -51,13 +53,17 @@ class DimensionGenerator:
     def generate_dimension_from_seeds(self, seeds):
         """Generates single dimension from seeds"""
 
-        seed_directions = (self.vectors.loc[map(lambda x: x[1], seeds)].values -
-                           self.vectors.loc[map(lambda x: x[0], seeds)].values)
+        seed_directions = (
+            self.vectors.loc[map(lambda x: x[1], seeds)].values
+            - self.vectors.loc[map(lambda x: x[0], seeds)].values
+        )
 
         seed_similarities = np.dot(self.directions_to_score, seed_directions.T)
         seed_similarities = np.amax(seed_similarities, axis=1)
 
-        directions = self.directions_to_score.iloc[np.flip(seed_similarities.T.argsort())]
+        directions = self.directions_to_score.iloc[
+            np.flip(seed_similarities.T.argsort())
+        ]
 
         # How many directions to take?
         num_directions = 10
@@ -71,15 +77,17 @@ class DimensionGenerator:
             l0 = directions.index.get_level_values(0)
             l1 = directions.index.get_level_values(1)
             directions = directions[
-                (np.arange(0, len(directions)) <= i) |
-                ((~l0.isin(ban_list)) & (~l1.isin(ban_list)))]
+                (np.arange(0, len(directions)) <= i)
+                | ((~l0.isin(ban_list)) & (~l1.isin(ban_list)))
+            ]
 
             i += 1
 
         # Add seeds to the top
         directions = pd.DataFrame(
             index=pd.MultiIndex.from_tuples(seeds + directions.index.tolist()),
-            data=np.concatenate((seed_directions, directions.to_numpy())))
+            data=np.concatenate((seed_directions, directions.to_numpy())),
+        )
 
         direction_group = directions.iloc[0:num_directions]
 
@@ -99,6 +107,8 @@ class DimensionGenerator:
 
         dimensions = self.generate_dimension_from_seeds(seeds)
         for name, data in zip(names, dimensions):
-            columns[name] = np.dot(self.vectors.values, data["vector"] / np.linalg.norm(data["vector"]))
+            columns[name] = np.dot(
+                self.vectors.values, data["vector"] / np.linalg.norm(data["vector"])
+            )
 
         return pd.DataFrame(columns, index=self.vectors.index)

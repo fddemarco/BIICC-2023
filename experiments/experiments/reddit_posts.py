@@ -20,27 +20,27 @@ class RedditPosts:
 
     @property
     def subreddit_field(self):
-        return 'subreddit'
+        return "subreddit"
 
     @property
     def text_field(self):
-        return 'text'
+        return "text"
 
     @property
     def title_field(self):
-        return 'title'
+        return "title"
 
     @property
     def selftext_field(self):
-        return 'selftext'
+        return "selftext"
 
     @property
     def body_field(self):
-        return 'body'
+        return "body"
 
     @property
     def score_field(self):
-        return 'score'
+        return "score"
 
     def grouped_data_iterator(self):
         splits = self.split_subreddits()
@@ -89,8 +89,7 @@ class RedditPosts:
         Returns top 10k subreddits with more posts, sorted in ascending order.
         """
         subreddits = (
-            self.dataset
-            .to_table(columns=[self.subreddit_field])
+            self.dataset.to_table(columns=[self.subreddit_field])
             .column(self.subreddit_field)
             .to_pandas()
             .value_counts()
@@ -110,7 +109,9 @@ class RedditPosts:
     def truncate_subreddit(self, df, text_len_threshold):
         df.sort_values(self.score_field, ascending=False)
         text_len = df[self.text_field].str.len()  # No funciona correctamente
-        df = df[text_len < text_len_threshold]    # porque no toma en cuenta los espacios del join
+        df = df[
+            text_len < text_len_threshold
+        ]  # porque no toma en cuenta los espacios del join
 
         cumulative_len = df[self.text_field].str.len().cumsum()
         df = df[cumulative_len < text_len_threshold]
@@ -118,23 +119,24 @@ class RedditPosts:
 
     def generate_text(self):
         for split_group in self.grouped_data_iterator():
-            text = split_group[self.text_field].str.cat(sep='\n')
+            text = split_group[self.text_field].str.cat(sep="\n")
             self.sink.write_text(text)
 
     def get_posts_in(self, subreddits):
         filter_condition = ds.field(self.subreddit_field).isin(subreddits)
         filtered_dataset = self.dataset.filter(filter_condition)
         df = filtered_dataset.to_table().to_pandas()
-        df[self.text_field] = self.texts_from(df)  # Falta ignorar aquellos comentarios sin texto
+        df[self.text_field] = self.texts_from(
+            df
+        )  # Falta ignorar aquellos comentarios sin texto
         return df
 
     def texts_by_subreddit(self, df):
         grouped = (
-            df
-            .groupby(self.subreddit_field)[self.text_field]
-            .apply(lambda x: ' '.join(x))
+            df.groupby(self.subreddit_field)[self.text_field]
+            .apply(lambda x: " ".join(x))
             .reset_index()
-           )
+        )
         return grouped
 
     def generate_embeddings_for(self, model):
@@ -162,9 +164,9 @@ class RedditPosts:
         return self.post_type.texts_from(self, df)
 
     def submissions_text(self, df):
-        return (df[self.title_field]
-                .str.cat(df[self.selftext_field], sep=' ')
-                .str.strip())
+        return (
+            df[self.title_field].str.cat(df[self.selftext_field], sep=" ").str.strip()
+        )
 
     def comments_text(self, df):
         return df[self.body_field]
@@ -180,24 +182,24 @@ def get_ranked_subreddits_from(ranking):
 
 def waller_ranking_arxiv():
     return [
-        'democrats',
-        'EnoughLibertarianSpam',
-        'hillaryclinton',
-        'progressive',
-        'BlueMidterm2018',
-        'EnoughHillHate',
-        'Enough_Sanders_Spam',
-        'badwomensanatomy',
-        'racism',
-        'GunsAreCool',
-        'Christians',
-        'The_Farage',
-        'new_right',
-        'conservatives',
-        'metacanada',
-        'Mr_Trump',
-        'NoFapChristians',
-        'TrueChristian',
-        'The_Donald',
-        'Conservative'
+        "democrats",
+        "EnoughLibertarianSpam",
+        "hillaryclinton",
+        "progressive",
+        "BlueMidterm2018",
+        "EnoughHillHate",
+        "Enough_Sanders_Spam",
+        "badwomensanatomy",
+        "racism",
+        "GunsAreCool",
+        "Christians",
+        "The_Farage",
+        "new_right",
+        "conservatives",
+        "metacanada",
+        "Mr_Trump",
+        "NoFapChristians",
+        "TrueChristian",
+        "The_Donald",
+        "Conservative",
     ]

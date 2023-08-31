@@ -4,4 +4,3 @@ class FasttextExperimentStub:
 
     def write_text(self, text):
         self.text.add(text)
-

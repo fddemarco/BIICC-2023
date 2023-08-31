@@ -9,12 +9,13 @@ class Options(str, Enum):
     """
     Options class type for CLI argument
     """
+
     @classmethod
     def help_message(cls: type) -> str:
         """
-         Returns help message for CLI argument
+        Returns help message for CLI argument
         """
-        raise NotImplementedError('Should be implemented in a subclass')
+        raise NotImplementedError("Should be implemented in a subclass")
 
     def __str__(self):
         return self.value
@@ -24,16 +25,17 @@ class Types(Options):
     """
     Reddit Posts type for CLI argument
     """
-    SUBMISSIONS = 'submissions'
-    COMMENTS = 'comments'
+
+    SUBMISSIONS = "submissions"
+    COMMENTS = "comments"
 
     @classmethod
     def help_message(cls: type) -> str:
-        return 'Reddit posts type to process'
+        return "Reddit posts type to process"
 
     def to_model(self):
         """
-            Returns corresponding model object
+        Returns corresponding model object
         """
         if self.value == self.SUBMISSIONS:
             return Submissions()
@@ -44,42 +46,45 @@ class Dataset(Options):
     """
     Posts Dataset type for CLI argument
     """
-    ORIGINAL = 'original'
-    TRUNCATED = 'truncated'
+
+    ORIGINAL = "original"
+    TRUNCATED = "truncated"
 
     @classmethod
     def help_message(cls: type) -> str:
-        return 'Dataset folder name'
+        return "Dataset folder name"
 
 
 class ResultDir(Options):
     """
     Results folder name for CLI argument
     """
-    RESULTS = 'results'
-    PRETRAINED = 'pretrained'
+
+    RESULTS = "results"
+    PRETRAINED = "pretrained"
 
     @classmethod
     def help_message(cls: type) -> str:
-        return 'Results folder name'
+        return "Results folder name"
 
 
 class Command(Options):
     """
     Command type for CLI argument
     """
-    TEXTS = 'texts'
-    TRUNCATE = 'truncate'
-    EMBEDDINGS = 'embeddings'
-    COMPARE = 'compare'
+
+    TEXTS = "texts"
+    TRUNCATE = "truncate"
+    EMBEDDINGS = "embeddings"
+    COMPARE = "compare"
 
     @classmethod
     def help_message(cls: type) -> str:
-        return 'Command to process'
+        return "Command to process"
 
     def apply(self, experiment):
         """
-            Apply corresponding command to given experiment
+        Apply corresponding command to given experiment
         """
         if self == Command.TEXTS:
             experiment.apply_texts()
