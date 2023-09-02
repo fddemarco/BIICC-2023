@@ -27,8 +27,8 @@ def leaning_left(z_score):
     return z_score < -1
 
 
-def calc_rbo(predicted_ranking, true_ranking, p=0.5):  # TODO: Seleccionar un p
-    return rbo.RankingSimilarity(true_ranking, predicted_ranking).rbo()
+def calc_rbo(predicted_ranking, true_ranking, p):  # TODO: Seleccionar un p
+    return rbo.RankingSimilarity(true_ranking, predicted_ranking).rbo(p=p)
 
 
 def calc_mean(fst_half_score, snd_half_score):
@@ -182,35 +182,35 @@ class Ranking:
         res = stats.kendalltau(x, y)
         return res.statistic
 
-    def rbo_score(self):
+    def rbo_score(self, p=1.0):
         """
         0 = disjoint,
         1 = identical
         """
         predicted_ranking = self.subreddits_sorted_by_score_desc()
         true_ranking = self.arxiv_waller_ranking()
-        res = calc_rbo(predicted_ranking, true_ranking)
+        res = calc_rbo(predicted_ranking, true_ranking, p)
         return res
 
-    def half_and_half_rbo_score(self):
+    def half_and_half_rbo_score(self, p=1.0):
         predicted_ranking = self.subreddits_sorted_by_score_desc()
         true_ranking = self.arxiv_waller_ranking()
         n = len(predicted_ranking) // 2
 
-        fst_half_score = calc_rbo(predicted_ranking[:n], true_ranking[:n])
+        fst_half_score = calc_rbo(predicted_ranking[:n], true_ranking[:n], p)
         snd_half_score = calc_rbo(
-            split_and_reverse(n, predicted_ranking), split_and_reverse(n, true_ranking)
+            split_and_reverse(n, predicted_ranking), split_and_reverse(n, true_ranking), p
         )
         return calc_mean(fst_half_score, snd_half_score)
 
-    def two_way_rbo_score(self):
+    def two_way_rbo_score(self, p=1.0):
         predicted_ranking = self.subreddits_sorted_by_score_desc()
         true_ranking = self.arxiv_waller_ranking()
-        desc_way_score = calc_rbo(predicted_ranking, true_ranking)
+        desc_way_score = calc_rbo(predicted_ranking, true_ranking, p)
 
         predicted_ranking.reverse()
         true_ranking.reverse()
-        asc_way_score = calc_rbo(predicted_ranking, true_ranking)
+        asc_way_score = calc_rbo(predicted_ranking, true_ranking, p)
         return calc_mean(desc_way_score, asc_way_score)
 
     def t_student_p_value(self):
