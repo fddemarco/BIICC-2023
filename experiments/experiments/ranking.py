@@ -199,7 +199,9 @@ class Ranking:
 
         fst_half_score = calc_rbo(predicted_ranking[:n], true_ranking[:n], p)
         snd_half_score = calc_rbo(
-            split_and_reverse(n, predicted_ranking), split_and_reverse(n, true_ranking), p
+            split_and_reverse(n, predicted_ranking),
+            split_and_reverse(n, true_ranking),
+            p,
         )
         return calc_mean(fst_half_score, snd_half_score)
 
