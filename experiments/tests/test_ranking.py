@@ -2,23 +2,15 @@ import pathlib
 
 import pandas as pd
 import pytest
-from experiments.ranking import Ranking, calc_rbo, arxiv_waller_scores
+from experiments.ranking import Ranking, calc_rbo, arxiv_waller_scores, arxiv_waller_ranking
 
-
+@pytest.fixture()
 def waller_ranking():
     return Ranking(arxiv_waller_scores())
 
-
-def reverse_waller_ranking():
-    subreddits = list(arxiv_waller_scores().keys())
-    scores = list(arxiv_waller_scores().values())
-    scores.reverse()
-    data = {s: scores[i] for i, s in enumerate(subreddits)}
-    return Ranking(data)
-
-
-def ranking_as_dataframe(data):
-    return pd.DataFrame(data, index=["democrats", "Conservative"])
+@pytest.fixture()
+def ranking_as_dataframe():
+    return pd.DataFrame({"dem_rep": [-2, 2]}, index=["democrats", "Conservative"])
 
 
 class TestRanking():
@@ -35,134 +27,84 @@ class TestRanking():
         ranking = Ranking(ranking_scores)
         assert expected_tau == pytest.approx(ranking.kendall_score())
 
-    def test_calc_rbo_sanity_same_ranking(self):
-        ranking = waller_ranking()
-        assert 1.0 == pytest.approx(
-            calc_rbo(ranking.arxiv_waller_ranking(), ranking.arxiv_waller_ranking()),
-        )
-
-    def test_calc_rbo_sanity_sub_chain(self):
-        ranking = waller_ranking()
-        assert 1.0 == pytest.approx(
-            calc_rbo(
-                ranking.arxiv_waller_ranking(), ranking.arxiv_waller_ranking()[:7]
+    @pytest.mark.parametrize(
+        "ranking, ranking_other, expected_rbo",[
+            (arxiv_waller_ranking(), arxiv_waller_ranking(), 1.0),
+            (arxiv_waller_ranking(), ["disjoint 1", "disjoint 2"], .0),
+            ([
+                "democrats",
+                "EnoughLibertarianSpam",
+                "hillaryclinton",
+                "progressive",
+                "BlueMidterm2018",
+            ], [
+                "EnoughLibertarianSpam",
+                "democrats",
+                "hillaryclinton",
+                "progressive",
+                "BlueMidterm2018",
+            ], .8
             )
+        ]
+    )
+    def test_calc_rbo(self, ranking, ranking_other, expected_rbo):
+        assert expected_rbo == pytest.approx(
+            calc_rbo(ranking, ranking_other, 1.0),
         )
 
-    def test_calc_rbo_sanity_disjoint(self):
-        ranking = waller_ranking()
-        predicted = ["fun 1", "fun 2"]
-        assert 0.0 == pytest.approx(calc_rbo(predicted, ranking.arxiv_waller_ranking()))
-
-    def test_calc_rbo_one_element_concordant(self):
-        x = ["Conservative"]
-        y = ["Conservative"]
-        assert 1.0 == pytest.approx(calc_rbo(x, y))
-
-    def test_calc_rbo_one_element_discordant(self):
-        x = ["Conservative"]
-        y = ["democrats"]
-        assert 0.0 == pytest.approx(calc_rbo(x, y))
-
-    def test_calc_rbo_1(self):
-        x = [
-            "democrats",
-            "EnoughLibertarianSpam",
-            "hillaryclinton",
-            "progressive",
-            "BlueMidterm2018",
-        ]
-        y = [
-            "EnoughLibertarianSpam",
-            "democrats",
-            "hillaryclinton",
-            "progressive",
-            "BlueMidterm2018",
-        ]
-        assert 0.8 == pytest.approx(calc_rbo(x, y))
-
-    def test_calc_rbo_2(self):
-        y = [
-            "democrats",
-            "EnoughLibertarianSpam",
-            "hillaryclinton",
-            "progressive",
-            "BlueMidterm2018",
-        ]
-        x = [
-            "democrats",
-            "EnoughLibertarianSpam",
-            "hillaryclinton",
-            "BlueMidterm2018",
-            "progressive",
-        ]
-        assert 0.95 == pytest.approx(calc_rbo(x, y))
-
-    def test_rbo_score_1(self):
-        ranking = Ranking(
-            {
+    @pytest.mark.parametrize(
+        "scores, expected_rbo",[
+            ({
                 "democrats": -3,
                 "EnoughLibertarianSpam": -2,
                 "hillaryclinton": -1,
                 "BlueMidterm2018": 0,
                 "progressive": 1,
-            }
-        )
-        assert 0.95 == pytest.approx(ranking.rbo_score())
-
-    def test_rbo_score_2(self):
-        ranking = Ranking(
-            {
+                }, .95
+            ), 
+            ({
                 "EnoughLibertarianSpam": -3,
                 "democrats": -2,
                 "hillaryclinton": -1,
                 "progressive": 0,
                 "BlueMidterm2018": 1,
-            }
-        )
-        assert 0.8 == pytest.approx(ranking.rbo_score())
+            }, .8)
+        ]
+    )
+    def test_rbo_score(self, scores, expected_rbo):
+        ranking = Ranking(scores)
+        assert expected_rbo == pytest.approx(ranking.rbo_score(1.0))
 
-    def save_plot(self, plot_name):
-        ranking = waller_ranking()
-        plot = getattr(ranking, plot_name)()
+    
+    @pytest.mark.slow
+    @pytest.mark.parametrize("plot_function, plot_name",
+    [
+        (lambda ranking: ranking.violin_plot(), "violin_plot"),
+        (lambda ranking: ranking.bean_plot(), "bean_plot"),
+        (lambda ranking: ranking.kde_plot(), "kde_plot"),
+        (lambda ranking: ranking.roc_auc_plot(), "roc_auc_plot")
+    ])
+    def test_plots(self, waller_ranking, plot_function, plot_name):
+        plot = plot_function(waller_ranking)
         path = pathlib.Path("plots")
         path.mkdir(exist_ok=True)
         plot.savefig(path / f"{plot_name}_test.png", dpi=300, bbox_inches="tight")
 
-    @pytest.mark.slow
-    def test_violin_plot(self):
-        self.save_plot("violin_plot")
-
-    @pytest.mark.slow
-    def test_bean_plot(self):
-        self.save_plot("bean_plot")
-
-    @pytest.mark.slow
-    def test_kde_plot(self):
-        self.save_plot("kde_plot")
-
-    @pytest.mark.slow
-    def test_auc_roc_plot(self):
-        self.save_plot("roc_auc_plot")
-
-    def test_auc_roc_score(self):
-        ranking = waller_ranking()
-        score = ranking.roc_auc_score()
+    def test_auc_roc_score(self, waller_ranking):
+        score = waller_ranking.roc_auc_score()
         assert 1.0 == pytest.approx(score)
 
-    def test_t_student_p_value(self):
-        ranking = waller_ranking()
-        p_value = ranking.t_student_p_value()
+    def test_t_student_p_value(self, waller_ranking):
+        p_value = waller_ranking.t_student_p_value()
         assert 0.0 == pytest.approx(p_value)
 
-    def test_from_pandas(self):
-        ranking = Ranking.from_pandas(ranking_as_dataframe({"dem_rep": [-2, 2]}))
+    def test_from_pandas(self, ranking_as_dataframe):
+        ranking = Ranking.from_pandas(ranking_as_dataframe)
         score = ranking.roc_auc_score()
         assert 1.0 == pytest.approx(score)
 
-    def test_n_dcg_score_01(self):
-        ranking = waller_ranking()
-        assert 1.0 == pytest.approx(ranking.n_dcg_score())
+    def test_n_dcg_score(self, waller_ranking):
+        assert 1.0 == pytest.approx(waller_ranking.n_dcg_score())
 
     def test_n_dcg_sanity(self, monkeypatch):
         def mock_arxiv_waller_scores(*args, **kwargs):
