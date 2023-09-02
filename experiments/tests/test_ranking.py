@@ -1,6 +1,4 @@
 import pathlib
-import unittest
-from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -23,65 +21,48 @@ def ranking_as_dataframe(data):
     return pd.DataFrame(data, index=["democrats", "Conservative"])
 
 
-class RankingTestCase(unittest.TestCase):
-    def test_kendall1(self):
-        ranking = Ranking(
-            {"Conservative": 2, "Christians": 1, "GunsAreCool": -1, "democrats": -2}
-        )
-        self.assertAlmostEqual(1.0, ranking.kendall_score())
-
-    def test_kendall2(self):
-        ranking = Ranking(
-            {"Conservative": 2, "Christians": -1, "GunsAreCool": 1, "democrats": -2}
-        )
-        self.assertAlmostEqual(0.6666666666666669, ranking.kendall_score())
-
-    def test_kendall3(self):
-        ranking = Ranking(
-            {"Conservative": -3, "Christians": 1, "GunsAreCool": -1, "democrats": -2}
-        )
-        self.assertAlmostEqual(0.0, ranking.kendall_score())
-
-    def test_kendall4(self):
-        ranking = Ranking(
-            {"Conservative": -3, "Christians": -1, "GunsAreCool": 1, "democrats": 2}
-        )
-        self.assertAlmostEqual(-1.0, ranking.kendall_score())
-
-    def test_kendall5(self):
-        ranking = waller_ranking()
-        self.assertAlmostEqual(1.0, ranking.kendall_score())
+class TestRanking():
+    @pytest.mark.parametrize(
+        "ranking_scores, expected_tau",
+        [({"Conservative": 2, "Christians": 1, "GunsAreCool": -1, "democrats": -2}, 1.0),
+        ({"Conservative": 2, "Christians": -1, "GunsAreCool": 1, "democrats": -2}, .6666666666666669),
+        ({"Conservative": -3, "Christians": 1, "GunsAreCool": -1, "democrats": -2}, .0),
+        ({"Conservative": -3, "Christians": -1, "GunsAreCool": 1, "democrats": 2}, -1.0),
+        (arxiv_waller_scores(), 1.0)
+        ]
+    )
+    def test_kendall_tau(self, ranking_scores, expected_tau):
+        ranking = Ranking(ranking_scores)
+        assert expected_tau == pytest.approx(ranking.kendall_score())
 
     def test_calc_rbo_sanity_same_ranking(self):
         ranking = waller_ranking()
-        self.assertAlmostEqual(
-            1.0,
+        assert 1.0 == pytest.approx(
             calc_rbo(ranking.arxiv_waller_ranking(), ranking.arxiv_waller_ranking()),
         )
 
     def test_calc_rbo_sanity_sub_chain(self):
         ranking = waller_ranking()
-        self.assertAlmostEqual(
-            1.0,
+        assert 1.0 == pytest.approx(
             calc_rbo(
                 ranking.arxiv_waller_ranking(), ranking.arxiv_waller_ranking()[:7]
-            ),
+            )
         )
 
     def test_calc_rbo_sanity_disjoint(self):
         ranking = waller_ranking()
         predicted = ["fun 1", "fun 2"]
-        self.assertAlmostEqual(0.0, calc_rbo(predicted, ranking.arxiv_waller_ranking()))
+        assert 0.0 == pytest.approx(calc_rbo(predicted, ranking.arxiv_waller_ranking()))
 
     def test_calc_rbo_one_element_concordant(self):
         x = ["Conservative"]
         y = ["Conservative"]
-        self.assertAlmostEqual(1.0, calc_rbo(x, y))
+        assert 1.0 == pytest.approx(calc_rbo(x, y))
 
     def test_calc_rbo_one_element_discordant(self):
         x = ["Conservative"]
         y = ["democrats"]
-        self.assertAlmostEqual(0.0, calc_rbo(x, y))
+        assert 0.0 == pytest.approx(calc_rbo(x, y))
 
     def test_calc_rbo_1(self):
         x = [
@@ -98,7 +79,7 @@ class RankingTestCase(unittest.TestCase):
             "progressive",
             "BlueMidterm2018",
         ]
-        self.assertAlmostEqual(0.8, calc_rbo(x, y))
+        assert 0.8 == pytest.approx(calc_rbo(x, y))
 
     def test_calc_rbo_2(self):
         y = [
@@ -115,7 +96,7 @@ class RankingTestCase(unittest.TestCase):
             "BlueMidterm2018",
             "progressive",
         ]
-        self.assertAlmostEqual(0.95, calc_rbo(x, y))
+        assert 0.95 == pytest.approx(calc_rbo(x, y))
 
     def test_rbo_score_1(self):
         ranking = Ranking(
@@ -127,7 +108,7 @@ class RankingTestCase(unittest.TestCase):
                 "progressive": 1,
             }
         )
-        self.assertAlmostEqual(0.95, ranking.rbo_score())
+        assert 0.95 == pytest.approx(ranking.rbo_score())
 
     def test_rbo_score_2(self):
         ranking = Ranking(
@@ -139,7 +120,7 @@ class RankingTestCase(unittest.TestCase):
                 "BlueMidterm2018": 1,
             }
         )
-        self.assertAlmostEqual(0.8, ranking.rbo_score())
+        assert 0.8 == pytest.approx(ranking.rbo_score())
 
     def save_plot(self, plot_name):
         ranking = waller_ranking()
@@ -167,33 +148,35 @@ class RankingTestCase(unittest.TestCase):
     def test_auc_roc_score(self):
         ranking = waller_ranking()
         score = ranking.roc_auc_score()
-        self.assertAlmostEqual(1.0, score)
+        assert 1.0 == pytest.approx(score)
 
     def test_t_student_p_value(self):
         ranking = waller_ranking()
         p_value = ranking.t_student_p_value()
-        self.assertAlmostEqual(0.0, p_value)
+        assert 0.0 == pytest.approx(p_value)
 
     def test_from_pandas(self):
         ranking = Ranking.from_pandas(ranking_as_dataframe({"dem_rep": [-2, 2]}))
         score = ranking.roc_auc_score()
-        self.assertAlmostEqual(1.0, score)
+        assert 1.0 == pytest.approx(score)
 
     def test_n_dcg_score_01(self):
         ranking = waller_ranking()
-        self.assertAlmostEqual(1.0, ranking.n_dcg_score())
+        assert 1.0 == pytest.approx(ranking.n_dcg_score())
 
-    def test_n_dcg_sanity(self):
-        with patch("experiments.ranking.arxiv_waller_scores") as mocked_function:
-            mocked_function.return_value = {
+    def test_n_dcg_sanity(self, monkeypatch):
+        def mock_arxiv_waller_scores(*args, **kwargs):
+            return {
                 "s1": 10,
                 "s2": 0,
                 "s3": 0,
                 "s4": 1,
-                "s5": 5,
-            }
-            ranking = Ranking({"s1": 0.1, "s2": 0.2, "s3": 0.3, "s4": 4, "s5": 70})
-            self.assertAlmostEqual(0.6956940443813076, ranking.n_dcg_score())
+                "s5": 5
+                }
+
+        monkeypatch.setattr("experiments.ranking.arxiv_waller_scores", mock_arxiv_waller_scores)
+        ranking = Ranking({"s1": 0.1, "s2": 0.2, "s3": 0.3, "s4": 4, "s5": 70})
+        assert 0.6956940443813076 == pytest.approx(ranking.n_dcg_score())
 
 
 if __name__ == "__main__":
