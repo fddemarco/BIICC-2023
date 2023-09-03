@@ -14,43 +14,35 @@ class DimensionGenerator:
             normalize(vectors, norm="l2", axis=1), index=vectors.index
         )
         self.name_mapping = {name.lower(): name for name in vectors.index}
-        self.directions_to_score = None
+        comm_names = list(self.vectors.index)
+        cosine_sims = cosine_similarity(self.vectors)
 
-    def calculate_dimensions(self, nn_n=10):
-        if self.directions_to_score is None:
-            comm_names = list(self.vectors.index)
-            cosine_sims = cosine_similarity(self.vectors)
+        # Find each community's nearest neighbours
+        ranks = cosine_sims.argsort().argsort()
 
-            # Find each community's nearest neighbours
+        # Take n NNs
+        nn_n = 10
+        only_calculate_for = (ranks > (len(comm_names) - nn_n - 2)) & ~np.diag(
+            np.ones(len(comm_names), dtype=bool)
+        )
 
-            np.fill_diagonal(cosine_sims, -10)
-            rows_i = np.array([])
-            cols_i = np.array([])
+        indices_to_calc = np.nonzero(only_calculate_for)
 
-            total_dir = 0
-            for i in range(0, len(cosine_sims)):
-                v = cosine_sims[i].argsort().argsort()
+        index = []
+        directions = []
+        for i in range(0, len(indices_to_calc[0])):
+            c1 = indices_to_calc[0][i]
+            c2 = indices_to_calc[1][i]
+            index.append((comm_names[c1], comm_names[c2]))
+            directions.append(self.vectors.iloc[c2] - self.vectors.iloc[c1])
 
-                only_calculate_for = v > (len(comm_names) - nn_n - 2)
-                total_dir = total_dir + np.sum(only_calculate_for)
-                cols = np.nonzero(only_calculate_for)
-                cols_i = np.append(cols_i, cols[0])
-                rows_i = np.append(rows_i, [i] * len(cols[0]))
-            indices_to_calc = (rows_i.astype(int), cols_i.astype(int))
-
-            index = []
-            directions = []
-            for i in range(0, len(indices_to_calc[0])):
-                c1 = indices_to_calc[0][i]
-                c2 = indices_to_calc[1][i]
-                index.append((comm_names[c1], comm_names[c2]))
-                directions.append(self.vectors.iloc[c2] - self.vectors.iloc[c1])
-
-            print(f"{total_dir} valid directions, {len(directions)} calculated.")
-            self.directions_to_score = pd.DataFrame(
-                index=pd.MultiIndex.from_tuples(index), data=directions
-            )
-        return self.directions_to_score
+        print(
+            "%d valid directions, %d calculated."
+            % (np.sum(only_calculate_for), len(directions))
+        )
+        self.directions_to_score = pd.DataFrame(
+            index=pd.MultiIndex.from_tuples(index), data=directions
+        )
 
     def generate_dimensions_from_seeds(self, seeds):
         """Generates multiple dimensions from seeds"""
@@ -64,10 +56,10 @@ class DimensionGenerator:
             - self.vectors.loc[map(lambda x: x[0], seeds)].values
         )
 
-        seed_similarities = np.dot(self.calculate_dimensions(), seed_directions.T)
+        seed_similarities = np.dot(self.directions_to_score, seed_directions.T)
         seed_similarities = np.amax(seed_similarities, axis=1)
 
-        directions = self.calculate_dimensions().iloc[
+        directions = self.directions_to_score.iloc[
             np.flip(seed_similarities.T.argsort())
         ]
 
