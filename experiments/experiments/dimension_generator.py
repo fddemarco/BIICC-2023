@@ -9,37 +9,24 @@ from sklearn.preprocessing import normalize
 class DimensionGenerator:
     """Dimension Generator class"""
 
-    def __init__(self, vectors):
+    def __init__(self, vectors, nn_n=10):
         self.vectors = pd.DataFrame(
             normalize(vectors, norm="l2", axis=1), index=vectors.index
         )
-        self.name_mapping = {name.lower(): name for name in vectors.index}
         comm_names = list(self.vectors.index)
         cosine_sims = cosine_similarity(self.vectors)
+        np.fill_diagonal(cosine_sims, float("-inf"))
 
-        # Find each community's nearest neighbours
         ranks = cosine_sims.argsort().argsort()
-
-        # Take n NNs
-        nn_n = 10
-        only_calculate_for = (ranks > (len(comm_names) - nn_n - 2)) & ~np.diag(
-            np.ones(len(comm_names), dtype=bool)
-        )
-
+        only_calculate_for = (ranks > (len(comm_names) - nn_n - 1))
         indices_to_calc = np.nonzero(only_calculate_for)
 
-        index = []
-        directions = []
-        for i in range(0, len(indices_to_calc[0])):
-            c1 = indices_to_calc[0][i]
-            c2 = indices_to_calc[1][i]
-            index.append((comm_names[c1], comm_names[c2]))
-            directions.append(self.vectors.iloc[c2] - self.vectors.iloc[c1])
+        index = [(comm_names[c1], comm_names[c2]) for c1, c2 in zip(*indices_to_calc)]
+        directions = [
+            self.vectors.iloc[c2] - self.vectors.iloc[c1]
+            for c1, c2 in zip(*indices_to_calc)
+        ]
 
-        print(
-            "%d valid directions, %d calculated."
-            % (np.sum(only_calculate_for), len(directions))
-        )
         self.directions_to_score = pd.DataFrame(
             index=pd.MultiIndex.from_tuples(index), data=directions
         )
