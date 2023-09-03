@@ -6,6 +6,11 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 
 
+def similarity_matrix(vectors):
+    cosine_sims = cosine_similarity(vectors)
+    np.fill_diagonal(cosine_sims, float("-inf"))
+    return cosine_sims
+
 class DimensionGenerator:
     """Dimension Generator class"""
 
@@ -14,12 +19,9 @@ class DimensionGenerator:
             normalize(vectors, norm="l2", axis=1), index=vectors.index
         )
         comm_names = list(self.vectors.index)
-        cosine_sims = cosine_similarity(self.vectors)
-        np.fill_diagonal(cosine_sims, float("-inf"))
+        cosine_sims = similarity_matrix(self.vectors)
 
-        ranks = cosine_sims.argsort().argsort()
-        only_calculate_for = (ranks > (len(comm_names) - nn_n - 1))
-        indices_to_calc = np.nonzero(only_calculate_for)
+        indices_to_calc = np.where(np.argsort(cosine_sims).argsort() > (len(comm_names) - nn_n - 1))
 
         index = [(comm_names[c1], comm_names[c2]) for c1, c2 in zip(*indices_to_calc)]
         directions = [
