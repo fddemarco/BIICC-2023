@@ -9,10 +9,14 @@ from experiments.dimension_generator import (
 )
 
 
-@pytest.fixture()
-def embeddings():
+@pytest.fixture(params=[
+    ([1, 0, 0], [-1, 0, 0]),
+    ([1, 0], [0, 1]),
+    ([1, 2, 3, 4, 5], [0, 1, -1, 2, -2])
+])
+def embeddings(request):
     subreddits = ["Conservative", "democrats"]
-    data = [[1, 2, 3, 4, 5], [0, 1, -1, 2, -2]]
+    data = [*request.param]
     return pd.DataFrame(data, index=subreddits)
 
 
@@ -45,5 +49,4 @@ class TestDimensionGenerator:
     def test_02(self, scores):
         dummy_series = scores.dem_rep == scores.dem_rep
         values_in_range = (scores.dem_rep <= 1) & (scores.dem_rep >= -1)
-
         tm.assert_series_equal(dummy_series, values_in_range)
