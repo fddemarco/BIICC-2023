@@ -11,6 +11,7 @@ def similarity_matrix(vectors):
     np.fill_diagonal(cosine_sims, float("-inf"))
     return cosine_sims
 
+
 class DimensionGenerator:
     """Dimension Generator class"""
 
@@ -18,37 +19,78 @@ class DimensionGenerator:
         self.vectors = pd.DataFrame(
             normalize(vectors, norm="l2", axis=1), index=vectors.index
         )
-        comm_names = list(self.vectors.index)
-        cosine_sims = similarity_matrix(self.vectors)
+        self.nn_n = min(len(vectors), nn_n)
+        self.pairs_cache = None
 
-        indices_to_calc = np.where(np.argsort(cosine_sims).argsort() > (len(comm_names) - nn_n - 1))
+    @property
+    def nearest_neighbours_pairs_diff(self):
+        """This is based on the aforementioned idea that we are looking for
+        pairs of communities that are very similar, but differ only in the target concept.
 
-        index = [(comm_names[c1], comm_names[c2]) for c1, c2 in zip(*indices_to_calc)]
-        directions = [
-            self.vectors.iloc[c2] - self.vectors.iloc[c1]
-            for c1, c2 in zip(*indices_to_calc)
-        ]
+        Returns:
+            pandas.DataFrame: the set of all pairs of communities (c1, c2) such that c1 != c2
+            and c2 is one of the nn_n nearest neighbours to c1. (nn_n = 10 by default)
+        """
+        if self.pairs_cache is None:
+            comm_names = list(self.vectors.index)
+            matrix = similarity_matrix(self.vectors)
 
-        self.directions_to_score = pd.DataFrame(
-            index=pd.MultiIndex.from_tuples(index), data=directions
-        )
+            kth_largest_values = np.partition(matrix, -self.nn_n, axis=1)[:, -self.nn_n]
+            indices_to_calc = np.where(matrix >= kth_largest_values[:, np.newaxis])
+
+            pair_names = [
+                (comm_names[c1], comm_names[c2]) for c1, c2 in zip(*indices_to_calc)
+            ]
+            pairs_difference = [
+                self.vectors.iloc[c2] - self.vectors.iloc[c1]
+                for c1, c2 in zip(*indices_to_calc)
+            ]
+
+            self.pairs_cache = pd.DataFrame(
+                index=pd.MultiIndex.from_tuples(pair_names), data=pairs_difference
+            )
+        return self.pairs_cache
 
     def generate_dimensions_from_seeds(self, seeds):
-        """Generates multiple dimensions from seeds"""
-        return list(map(lambda x: self.generate_dimension_from_single_seed([x]), seeds))
+        """Generates dimensions from list of seed pairs.
 
-    def generate_dimension_from_single_seed(self, seeds):
-        """Generates single dimension from seeds"""
+        Args:
+            seeds (List(left_seed, right_seed)): List of seeds used to generate dimensions.
 
+        Returns:
+            List(pd.DataFrame): List of community ... for each dimension.
+        """
+        return [self.augment_seed(x) for x in seeds]
+
+    def augment_seed(self, seed_pair):
+        """Augment seed pair for a more robust representation of the dimension.
+
+        All pairs are ranked based on the cosine similarity of their vector difference
+        with the vector difference of the seed pair: cos(s2-s1, c2-c1). Additional pairs
+        are then selected greedily. The most similar pair to the original seed pair
+        that has no overlap in communities with the seed pair or any of the previously
+        selected pairs is selected, and this process is repeated until k - 1
+        additional pairs are selected, which results in the k pairs used to create
+        the dimension.
+
+        Args:
+            seed_pair (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        seed_indices = np.array([seed_pair]).T
         seed_directions = (
-            self.vectors.loc[map(lambda x: x[1], seeds)].values
-            - self.vectors.loc[map(lambda x: x[0], seeds)].values
+            self.vectors.loc[seed_indices[1]].values
+            - self.vectors.loc[seed_indices[0]].values
         )
 
-        seed_similarities = np.dot(self.directions_to_score, seed_directions.T)
-        seed_similarities = np.amax(seed_similarities, axis=1)
+        seed_similarities = np.dot(
+            self.nearest_neighbours_pairs_diff, seed_directions.T
+        )
+        seed_similarities = seed_similarities.max(axis=1)
 
-        directions = self.directions_to_score.iloc[
+        directions = self.nearest_neighbours_pairs_diff.iloc[
             np.flip(seed_similarities.T.argsort())
         ]
 
@@ -56,7 +98,7 @@ class DimensionGenerator:
         num_directions = 10
 
         # make directions unique subreddits (subreddit can only occur once)
-        ban_list = [s for sd in seeds for s in sd]
+        ban_list = list(seed_pair)
         i = -1  # to filter out seed pairs
         while (i < len(directions)) and (i < (num_directions + 1)):
             ban_list.extend(directions.index[i])
@@ -72,7 +114,7 @@ class DimensionGenerator:
 
         # Add seeds to the top
         directions = pd.DataFrame(
-            index=pd.MultiIndex.from_tuples(seeds + directions.index.tolist()),
+            index=pd.MultiIndex.from_tuples([seed_pair] + directions.index.tolist()),
             data=np.concatenate((seed_directions, directions.to_numpy())),
         )
 
@@ -80,22 +122,16 @@ class DimensionGenerator:
 
         dimension = np.sum(direction_group.values, axis=0)
 
-        return {
-            "note": "generated from seed pairs",
-            "seed": seeds,
-            "vector": dimension,
-            "left_comms": list(map(lambda x: x[0], direction_group.index)),
-            "right_comms": list(map(lambda x: x[1], direction_group.index)),
-        }
+        return dimension
 
     def get_scores_from_seeds(self, seeds, names):
         """Calculate score for embeddings over dimensions"""
         columns = {}
 
         dimensions = self.generate_dimensions_from_seeds(seeds)
-        for name, data in zip(names, dimensions):
+        for name, dimension in zip(names, dimensions):
             columns[name] = np.dot(
-                self.vectors.values, data["vector"] / np.linalg.norm(data["vector"])
+                self.vectors.values, dimension / np.linalg.norm(dimension)
             )
 
         return pd.DataFrame(columns, index=self.vectors.index)
