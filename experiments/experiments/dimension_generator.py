@@ -29,7 +29,7 @@ def similarity_matrix(vectors: pd.DataFrame) -> npt.NDArray[np.floating]:
 
 
 class DimensionGenerator:
-    """Dimension Generator class"""
+    """A class to generate d-ness scores from seed pairs."""
 
     def __init__(self, vectors, nn_n=10):
         self.vectors = pd.DataFrame(
