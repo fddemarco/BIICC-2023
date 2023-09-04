@@ -1,12 +1,28 @@
-""" Dimension generator script used in Waller et al"""
+"""
+    This module generates d-ness scores from given dimension seed pairs
+"""
+from typing import TypeAlias, List, Sequence, Tuple
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 
+SeedPair: TypeAlias = Tuple[str, str]
+Dimension: TypeAlias = npt.NDArray[np.floating]
 
-def similarity_matrix(vectors):
+
+def similarity_matrix(vectors: pd.DataFrame) -> npt.NDArray[np.floating]:
+    """Compute the cosine similarity pairwise between each row in vectors,
+    but replace the principal diagonal with -inf.
+
+    Args:
+        vectors (pd.DataFrame): Input data.
+
+    Returns:
+        npt.NDArray[np.floating]: Cosine similarity matrix.
+    """
     cosine_sims = cosine_similarity(vectors)
     np.fill_diagonal(cosine_sims, float("-inf"))
     return cosine_sims
@@ -23,12 +39,12 @@ class DimensionGenerator:
         self.pairs_cache = None
 
     @property
-    def nearest_neighbours_pairs_diff(self):
+    def nearest_neighbours_pairs_diff(self) -> pd.DataFrame:
         """This is based on the aforementioned idea that we are looking for
         pairs of communities that are very similar, but differ only in the target concept.
 
         Returns:
-            pandas.DataFrame: the set of all pairs of communities (c1, c2) such that c1 != c2
+            pd.DataFrame: the set of all pairs of communities (c1, c2) such that c1 != c2
             and c2 is one of the nn_n nearest neighbours to c1. (nn_n = 10 by default)
         """
         if self.pairs_cache is None:
@@ -51,18 +67,20 @@ class DimensionGenerator:
             )
         return self.pairs_cache
 
-    def generate_dimensions_from_seeds(self, seeds):
-        """Generates dimensions from list of seed pairs.
+    def generate_dimensions_from_seeds(
+        self, seeds: Sequence[SeedPair]
+    ) -> List[Dimension]:
+        """Apply seed augmentation to all dimension seed pairs.
 
         Args:
-            seeds (List(left_seed, right_seed)): List of seeds used to generate dimensions.
+            seeds (Sequence[SeedPair]): List of dimension seed pairs.
 
         Returns:
-            List(pd.DataFrame): List of community ... for each dimension.
+            List[Dimension]: _description_
         """
         return [self.augment_seed(x) for x in seeds]
 
-    def augment_seed(self, seed_pair):
+    def augment_seed(self, seed_pair: SeedPair) -> Dimension:
         """Augment seed pair for a more robust representation of the dimension.
 
         All pairs are ranked based on the cosine similarity of their vector difference
@@ -74,10 +92,10 @@ class DimensionGenerator:
         the dimension.
 
         Args:
-            seed_pair (_type_): _description_
+            seed_pair (SeedPair): Dimension seed pair.
 
         Returns:
-            _type_: _description_
+            Dimension: Augmented dimension representation.
         """
         seed_indices = np.array([seed_pair]).T
         seed_directions = (
@@ -124,8 +142,16 @@ class DimensionGenerator:
 
         return dimension
 
-    def get_scores_from_seeds(self, seeds, names):
-        """Calculate score for embeddings over dimensions"""
+    def get_scores_from_seeds(self, seeds: List[SeedPair], names: List[str]):
+        """Calculate dimensions scores.
+
+        Args:
+            seeds (List[SeedPair]): List of dimension seed pairs.
+            names (List[str]): List of dimension names.
+
+        Returns:
+            pd.DataFrame: Dimensions scores DataFrame.
+        """
         columns = {}
 
         dimensions = self.generate_dimensions_from_seeds(seeds)
