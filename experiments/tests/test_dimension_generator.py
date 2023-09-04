@@ -79,20 +79,20 @@ def seeds(index):
 
 
 @pytest.fixture()
-def dimen_names():
-    return ["dem_rep"]
+def dimen_name():
+    return "ness_score"
 
 
 @pytest.fixture()
-def scores(embeddings, seeds, dimen_names):
+def scores(embeddings, seeds, dimen_name):
     generator = DimensionGenerator(embeddings)
-    return generator.get_scores_from_seeds(seeds, dimen_names).dem_rep
+    return generator.get_scores_from_seeds(seeds, [dimen_name])[dimen_name]
 
 
 @pytest.fixture()
-def waller_scores(embeddings, seeds, dimen_names):
+def waller_scores(embeddings, seeds, dimen_name):
     dimen_generator = WallerDimenGenerator(embeddings)
-    return dimen_generator.get_scores(seeds, dimen_names).dem_rep
+    return dimen_generator.get_scores(seeds, [dimen_name])[dimen_name]
 
 
 class TestDimensionGenerator:
