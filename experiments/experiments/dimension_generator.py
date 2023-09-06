@@ -46,7 +46,6 @@ class DimensionGenerator:
         )
         self.nn_n = min(len(vectors), nn_n)
         self.k = k
-        self.pairs_cache = None
 
     def nearest_neighbours_directions(self) -> pd.DataFrame:
         """This is based on the aforementioned idea that we are looking for
@@ -163,8 +162,7 @@ class DimensionGenerator:
             index=pd.MultiIndex.from_tuples([seed_pair] + directions.index.tolist()),
             data=np.concatenate([[seed_direction], directions.to_numpy()]),
         )
-        direction_group = directions.iloc[0 : self.k]
-        return directions
+        return directions.iloc[0 : self.k]
 
     def get_scores_from_seeds(self, seeds: List[SeedPair], names: List[str]):
         """Calculate dimensions scores.

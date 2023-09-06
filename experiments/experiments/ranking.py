@@ -216,9 +216,9 @@ class Ranking:
         return calc_mean(desc_way_score, asc_way_score)
 
     def t_student_p_value(self):
-        p_val_t = stats.ttest_ind(
-            self.conservatives_scores(), self.democrats_scores()
-        )[1]
+        p_val_t = stats.ttest_ind(self.conservatives_scores(), self.democrats_scores())[
+            1
+        ]
         return p_val_t
 
     def roc_auc_score(self):
