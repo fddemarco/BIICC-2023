@@ -110,8 +110,8 @@ class Experiment:
         model = fasttext.load_model(model_pathname)
         reddit_posts = self._get_reddit_posts()
 
-        tf_idf = reddit_posts.generate_embeddings_for(model)
-        tf_idf.to_csv(self._embedding_pathname)
+        embeddings = reddit_posts.generate_embeddings_for(model)
+        embeddings.to_csv(self._embedding_pathname)
 
     def get_scores(self, data, seeds=None) -> pd.DataFrame:
         """
