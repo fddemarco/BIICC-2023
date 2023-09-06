@@ -5,7 +5,6 @@ from typing import TypeAlias, List, Sequence, Tuple
 
 import numpy as np
 import numpy.typing as npt
-from numpy.linalg import norm
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
@@ -85,7 +84,7 @@ class DimensionGenerator:
             seeds (Sequence[SeedPair]): List of dimension seed pairs.
 
         Returns:
-            List[Dimension]: _description_
+            List[Dimension]: List of augmented dimension representation.
         """
         return [self.augment_seed(x) for x in seeds]
 
@@ -134,7 +133,7 @@ class DimensionGenerator:
 
         # make directions unique subreddits (subreddit can only occur once)
         ban_list = list(seed_pair)
-        i = -1  # to filter out seed pairs
+        i = -1  # to filter out seed pair
         while i < len(directions) and i < self.k + 1:
             ban_list.extend(directions.index[i])
 
