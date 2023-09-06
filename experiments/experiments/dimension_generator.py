@@ -134,7 +134,7 @@ class DimensionGenerator:
         Args:
             seed_pair (SeedPair): Dimension seed pair.
             seed_direction (np.array): Seed pair direction.
-            directions (pd.DataFrame): Sorted nearest neighbours directions.
+            directions (pd.DataFrame): DESC Sorted nearest neighbours directions.
 
         Returns:
             pd.DataFrame: Augmented seed pair dimension directions.
@@ -142,7 +142,7 @@ class DimensionGenerator:
         ban_list = list(seed_pair)
 
         # Este algoritmo hay que revisarlo.
-        i = -1  # to filter out seed pair
+        i = -1  # filter out seed pair
         while i < len(directions) and i < self.k + 1:
             ban_list.extend(directions.index[i])
 
