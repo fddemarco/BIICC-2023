@@ -10,7 +10,7 @@ import pandas as pd
 
 import fasttext
 import experiments.dimension_generator as dg
-import experiments.reddit_posts as ps
+import experiments.reddit_posts as rps
 import experiments.ranking as rk
 
 
@@ -90,7 +90,7 @@ class Experiment:
 
     def _get_reddit_posts(self):
         dataset = ds.dataset(self._data_pathname, format="parquet")
-        reddit_posts = ps.RedditPosts(dataset, self, self.post_type)
+        reddit_posts = rps.RedditPosts(dataset, self, self.post_type)
         return reddit_posts
 
     def write_text(self, text):

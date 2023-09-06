@@ -1,7 +1,11 @@
 import pandas as pd
 import pyarrow.dataset as ds
+from typing import TypeAlias, List, Iterator
 
 from .posts_type import Submissions, Comments
+
+
+Community: TypeAlias = str
 
 
 class RedditPosts:
@@ -42,28 +46,76 @@ class RedditPosts:
     def score_field(self):
         return "score"
 
-    def grouped_data_iterator(self):
+    def grouped_data_iterator(self)->Iterator[pd.DataFrame]:
+        """Iterate over community splits text.
+
+        Yields all text content of a community split at a time.
+
+        Yields:
+            pd.DataFrame: Dataframe of all text content concatenated for each community.
+        """
         splits = self.split_subreddits()
         for split in splits:
             yield self.get_texts_by_subreddit(split)
 
-    def grouped_split_iterator(self, split):
-        group = self.get_texts_by_subreddit(split)
-        yield from self.subreddit_iterator(group, split)
+    def split_data_iterator(self)->Iterator[pd.DataFrame]:
+        """Iterate over all communities text.
 
-    def subreddit_iterator(self, group, split):
-        for s in split:
-            df = group[group[self.subreddit_field] == s].copy()
-            yield df
+        Yields all text content of a single community at a time.
 
-    def posts_split_iterator(self, split):
+        Yields:
+            Iterator[pd.DataFrame]: Single community text data.
+        """
+        splits = self.split_subreddits()
+        for split in splits:
+            yield from self.grouped_split_iterator(split)
+        
+
+    def grouped_split_iterator(self, split: List[Community])->Iterator[pd.DataFrame]:
+        """Iterate over community text within a certain split.
+
+            Yields all text content of each community at a time.
+
+        Args:
+            split (List[Community]): List of communities to be iterated
+
+        Yields:
+            Iterator[pd.DataFrame]: All text content of a community (concatenated posts)
+        """        
+        grouped_text = self.get_texts_by_subreddit(split)
+        yield from self.subreddit_iterator(grouped_text, split)
+
+    def posts_split_iterator(self, split: List[Community])->Iterator[pd.DataFrame]:
+        """Iterate over community posts within a certain split.
+
+        Yields a all posts of a community at a time.
+
+        Args:
+            split (List[Community]): List of communities to be iterated
+
+        Yields:
+            Iterator[pd.DataFrame]: All posts of a community (individual posts)
+        """
         group = self.get_posts_in(split)
         yield from self.subreddit_iterator(group, split)
 
+    def subreddit_iterator(self, data: pd.DataFrame, split: List[Community])->Iterator[pd.DataFrame]:
+        """Iterate over communities data in a split
+
+        Args:
+            data (pd.DataFrame): Input data
+            split (List[Community]): List of communities to be iterated
+
+        Yields:
+            Iterator[pd.DataFrame]: Data from a single community
+        """        
+        for s in split:
+            filter_condition = data[self.subreddit_field] == s
+            yield data[filter_condition].copy()
+            
     def get_texts_by_subreddit(self, split):
         df = self.get_posts_in(split)
-        group = self.texts_by_subreddit(df)
-        return group
+        return self.texts_by_subreddit(df)
 
     def split_subreddits(self):
         splits = []
@@ -122,13 +174,12 @@ class RedditPosts:
             text = split_group[self.text_field].str.cat(sep="\n")
             self.sink.write_text(text)
 
-    def get_posts_in(self, subreddits):
+    # Falta ignorar aquellos comentarios sin texto
+    def get_posts_in(self, subreddits): 
         filter_condition = ds.field(self.subreddit_field).isin(subreddits)
         filtered_dataset = self.dataset.filter(filter_condition)
         df = filtered_dataset.to_table().to_pandas()
-        df[self.text_field] = self.texts_from(
-            df
-        )  # Falta ignorar aquellos comentarios sin texto
+        df[self.text_field] = self.texts_from(df)  
         return df
 
     def texts_by_subreddit(self, df):
@@ -140,20 +191,19 @@ class RedditPosts:
         return grouped
 
     def generate_embeddings_for(self, model):
-        ranked_subreddits = self.get_ranked_subreddits()
-        embeddings = self.embeddings_for_subreddits(model, ranked_subreddits)
-        return pd.DataFrame(embeddings, index=ranked_subreddits, columns=range(0, 300))
-
-    def embeddings_for_subreddits(self, model, subreddits):
         embeddings = []
-        for df in self.grouped_split_iterator(subreddits):
-            embeddings.append(self.embedding_for(df, model))
-        return embeddings
+        subreddits = []
+        for df in self.split_data_iterator():
+            embedding, subreddit = self.embedding_for(df, model)
+            embeddings.append(embedding)
+            subreddits.append(subreddit)
+        return pd.DataFrame(embeddings, index=subreddits, columns=range(0, 300))
 
     def embedding_for(self, df, model):
         text = df[self.text_field].item()
         embedding = model.get_sentence_vector(text).astype(float)
-        return embedding
+        subreddit = df[self.subreddit_field].item()
+        return embedding, subreddit
 
     def get_ranked_subreddits(self):
         subreddits = self.get_most_popular_subreddits()
