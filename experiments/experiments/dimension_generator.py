@@ -5,6 +5,7 @@ from typing import TypeAlias, List, Sequence, Tuple
 
 import numpy as np
 import numpy.typing as npt
+from numpy.linalg import norm
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
@@ -31,11 +32,19 @@ def similarity_matrix(vectors: pd.DataFrame) -> npt.NDArray[np.floating]:
 class DimensionGenerator:
     """A class to generate d-ness scores from seed pairs."""
 
-    def __init__(self, vectors, nn_n=10):
+    def __init__(self, vectors:pd.DataFrame, nn_n: int = 10, k: int = 10):
+        """_summary_
+
+        Args:
+            vectors (pd.DataFrame): Input data.
+            nn_n (int, optional): Number of pairs to generate per community. Defaults to 10.
+            k (int, optional): Number of directions used to create the dimension. Defaults to 10.
+        """        
         self.vectors = pd.DataFrame(
             normalize(vectors, norm="l2", axis=1), index=vectors.index
         )
         self.nn_n = min(len(vectors), nn_n)
+        self.k = k
         self.pairs_cache = None
 
     @property
@@ -97,35 +106,43 @@ class DimensionGenerator:
         Returns:
             Dimension: Augmented dimension representation.
         """
+        
+        # 2 x 1
         seed_indices = np.array([seed_pair]).T
-        seed_directions = (
+        
+        # 1 x N
+        seed_direction = (
             self.vectors.loc[seed_indices[1]].values
             - self.vectors.loc[seed_indices[0]].values
         )
 
+        # N x 1. No me queda claro por que hace producto interno en vez de cosine similarity 
+        # los vectores no estan normalizados, asi que no son equivalentes 
         seed_similarities = np.dot(
-            self.nearest_neighbours_pairs_diff, seed_directions.T
+            self.nearest_neighbours_pairs_diff, seed_direction.T
         )
+
+        assert (seed_similarities >= -1).all()
+        assert (seed_similarities <= 1).all()
+        
+        # N x 1 Matrix to 1-d Vector
         seed_similarities = seed_similarities.max(axis=1)
 
         directions = self.nearest_neighbours_pairs_diff.iloc[
-            np.flip(seed_similarities.T.argsort())
+            seed_similarities.argsort()[::-1] # Sort DESC nearest neighbours by similarity
         ]
-
-        # How many directions to take?
-        num_directions = 10
 
         # make directions unique subreddits (subreddit can only occur once)
         ban_list = list(seed_pair)
         i = -1  # to filter out seed pairs
-        while (i < len(directions)) and (i < (num_directions + 1)):
+        while i < len(directions) and i < self.k + 1:
             ban_list.extend(directions.index[i])
 
-            l0 = directions.index.get_level_values(0)
-            l1 = directions.index.get_level_values(1)
+            c1 = directions.index.get_level_values(0)
+            c2 = directions.index.get_level_values(1)
             directions = directions[
                 (np.arange(0, len(directions)) <= i)
-                | ((~l0.isin(ban_list)) & (~l1.isin(ban_list)))
+                | ((~c1.isin(ban_list)) & (~c2.isin(ban_list)))
             ]
 
             i += 1
@@ -133,10 +150,10 @@ class DimensionGenerator:
         # Add seeds to the top
         directions = pd.DataFrame(
             index=pd.MultiIndex.from_tuples([seed_pair] + directions.index.tolist()),
-            data=np.concatenate((seed_directions, directions.to_numpy())),
+            data=np.concatenate((seed_direction, directions.to_numpy())),
         )
 
-        direction_group = directions.iloc[0:num_directions]
+        direction_group = directions.iloc[0:self.k]
 
         dimension = np.sum(direction_group.values, axis=0)
 

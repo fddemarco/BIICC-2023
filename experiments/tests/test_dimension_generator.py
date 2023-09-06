@@ -93,6 +93,12 @@ from experiments.dimension_generator import (
             [0.67652712, 0.10460976, 0.67159493, 0.7530859],
             [0.31577139, 0.65780574, 0.80171352, 0.82898091],
         ],
+        [
+            [1,0,0],
+            [1,1,0],
+            [-1,1,0],
+            [0,1,0]
+        ]
     ]
 )
 def data(request):
@@ -121,13 +127,13 @@ def dimen_name():
 
 @pytest.fixture()
 def scores(embeddings, seeds, dimen_name):
-    generator = DimensionGenerator(embeddings, nn_n=10)
+    generator = DimensionGenerator(embeddings, nn_n=10, k=10)
     return generator.get_scores_from_seeds(seeds, [dimen_name])[dimen_name]
 
 
 @pytest.fixture()
 def waller_scores(embeddings, seeds, dimen_name):
-    dimen_generator = WallerDimenGenerator(embeddings)  # nn_n = 10
+    dimen_generator = WallerDimenGenerator(embeddings)  # nn_n = 10, k = 10
     return dimen_generator.get_scores(seeds, [dimen_name])[dimen_name]
 
 
