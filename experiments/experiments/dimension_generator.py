@@ -31,16 +31,16 @@ def similarity_matrix(vectors: pd.DataFrame) -> npt.NDArray[np.floating]:
 class DimensionGenerator:
     """A class to generate d-ness scores from seed pairs."""
 
-    def __init__(self, vectors:pd.DataFrame, nn_n: int = 10, k: int = 10):
+    def __init__(self, vectors: pd.DataFrame, nn_n: int = 10, k: int = 10):
         """Initialize a d-ness score generator with input data.
 
         Args:
             vectors (pd.DataFrame): Input data.
-            nn_n (int, optional): Nearest Neighbours Number of pairs to generate per community. 
+            nn_n (int, optional): Nearest Neighbours Number of pairs to generate per community.
             Defaults to 10.
-            k (int, optional): Number of directions used to create the dimension. 
+            k (int, optional): Number of directions used to create the dimension.
             Defaults to 10.
-        """        
+        """
         self.vectors = pd.DataFrame(
             normalize(vectors, norm="l2", axis=1), index=vectors.index
         )
@@ -100,31 +100,35 @@ class DimensionGenerator:
         Returns:
             Dimension: Augmented dimension representation.
         """
-                
+
         # 1-D Vector
         seed_direction = (
             self.vectors.loc[seed_pair[1]].to_numpy()
             - self.vectors.loc[seed_pair[0]].to_numpy()
         )
         nn_directions = self.nearest_neighbours_directions()
-        
-        # 1-D Vector. No me queda claro por que hace producto interno en vez de cosine similarity 
-        # los vectores no estan normalizados, asi que no son equivalentes 
+
+        # 1-D Vector. No me queda claro por que hace producto interno en vez de cosine similarity
+        # los vectores no estan normalizados, asi que no son equivalentes
         seed_similarities = np.dot(nn_directions, seed_direction.T)
 
         # assert (seed_similarities >= -1).all()
         # assert (seed_similarities <= 1).all()
 
         directions = nn_directions.iloc[
-            seed_similarities.argsort()[::-1] # Sort DESC nearest neighbours by similarity
+            seed_similarities.argsort()[
+                ::-1
+            ]  # Sort DESC nearest neighbours by similarity
         ]
 
         directions = self.augmentation_algorithm(seed_pair, seed_direction, directions)
         return np.sum(directions.to_numpy(), axis=0)
 
-    def augmentation_algorithm(self, seed_pair: SeedPair, seed_direction: np.array, directions: pd.DataFrame) -> pd.DataFrame:
-        """ Seed augmentation algorithm.
-        
+    def augmentation_algorithm(
+        self, seed_pair: SeedPair, seed_direction: np.array, directions: pd.DataFrame
+    ) -> pd.DataFrame:
+        """Seed augmentation algorithm.
+
         The most similar pair to the original seed pair
         that has no overlap in communities with the seed pair or any of the previously
         selected pairs is selected, and this process is repeated until k - 1
@@ -138,7 +142,7 @@ class DimensionGenerator:
 
         Returns:
             pd.DataFrame: Augmented seed pair dimension directions.
-        """        
+        """
         ban_list = list(seed_pair)
 
         # Este algoritmo hay que revisarlo.
@@ -159,7 +163,7 @@ class DimensionGenerator:
             index=pd.MultiIndex.from_tuples([seed_pair] + directions.index.tolist()),
             data=np.concatenate([[seed_direction], directions.to_numpy()]),
         )
-        direction_group = directions.iloc[0:self.k]
+        direction_group = directions.iloc[0 : self.k]
         return directions
 
     def get_scores_from_seeds(self, seeds: List[SeedPair], names: List[str]):
