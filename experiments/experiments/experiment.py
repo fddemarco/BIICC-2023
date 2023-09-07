@@ -117,7 +117,7 @@ class Experiment:
         """
         Generates scores from DATA using SEEDS
         """
-        if seeds is None:
+        if seeds is None:  # TODO: parametrizar names
             seeds = [("democrats", "Conservative")]
         generator = dg.DimensionGenerator(data)
         return generator.get_scores_from_seeds([self._dem_rep_field], seeds)

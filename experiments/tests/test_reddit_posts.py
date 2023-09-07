@@ -141,38 +141,6 @@ class RedditPostsTestCase(unittest.TestCase):
         conservative_text = "Conservative title 1 Conservative body 1"
         self.assertEqual({democrats_text, conservative_text}, model.text)
 
-    def test_ranked_subreddits(self):
-        df = pd.DataFrame(
-            {
-                "title": [
-                    "democrats title 1",
-                    "democrats title 2",
-                    "Conservative title 1",
-                ],
-                "selftext": [
-                    "democrats body 1",
-                    "democrats body 2",
-                    "Conservative body 1",
-                ],
-                "subreddit": ["democrats", "democrats", "Conservative"],
-            }
-        )
-        posts, _ = self.create_posts_instance(df)
-        subreddits = set(posts.get_ranked_subreddits())
-        self.assertEqual({"democrats", "Conservative"}, subreddits)
-
-    def test_not_ranked_subreddits(self):
-        df = pd.DataFrame(
-            {
-                "title": ["democrats title 1", "democrats title 2", "fun title 1"],
-                "selftext": ["democrats body 1", "democrats body 2", "fun body 1"],
-                "subreddit": ["democrats", "democrats", "fun"],
-            }
-        )
-        posts, _ = self.create_posts_instance(df)
-        subreddits = set(posts.get_ranked_subreddits())
-        self.assertEqual({"democrats"}, subreddits)
-
     def test_truncate_dataset(self):
         df = pd.DataFrame(
             {

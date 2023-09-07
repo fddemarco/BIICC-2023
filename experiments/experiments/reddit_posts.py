@@ -205,11 +205,6 @@ class RedditPosts:
         subreddit = df[self.subreddit_field].item()
         return embedding, subreddit
 
-    def get_ranked_subreddits(self):
-        subreddits = self.get_most_popular_subreddits()
-        ranked_subreddits = get_ranked_subreddits_from(subreddits)
-        return ranked_subreddits
-
     def texts_from(self, df):
         return self.post_type.texts_from(self, df)
 
@@ -223,33 +218,4 @@ class RedditPosts:
 
 
 def partition_threshold(subreddits):
-    return int(subreddits.sum()) // 20
-
-
-def get_ranked_subreddits_from(ranking):
-    return [s for s in waller_ranking_arxiv() if s in ranking]
-
-
-def waller_ranking_arxiv():
-    return [
-        "democrats",
-        "EnoughLibertarianSpam",
-        "hillaryclinton",
-        "progressive",
-        "BlueMidterm2018",
-        "EnoughHillHate",
-        "Enough_Sanders_Spam",
-        "badwomensanatomy",
-        "racism",
-        "GunsAreCool",
-        "Christians",
-        "The_Farage",
-        "new_right",
-        "conservatives",
-        "metacanada",
-        "Mr_Trump",
-        "NoFapChristians",
-        "TrueChristian",
-        "The_Donald",
-        "Conservative",
-    ]
+    return int(subreddits.sum()) // 100
