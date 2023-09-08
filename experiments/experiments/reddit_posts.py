@@ -46,7 +46,7 @@ class RedditPosts:
     def score_field(self):
         return "score"
 
-    def grouped_data_iterator(self)->Iterator[pd.DataFrame]:
+    def grouped_data_iterator(self) -> Iterator[pd.DataFrame]:
         """Iterate over community splits text.
 
         Yields all text content of a community split at a time.
@@ -58,7 +58,7 @@ class RedditPosts:
         for split in splits:
             yield self.get_texts_by_subreddit(split)
 
-    def split_data_iterator(self)->Iterator[pd.DataFrame]:
+    def split_data_iterator(self) -> Iterator[pd.DataFrame]:
         """Iterate over all communities text.
 
         Yields all text content of a single community at a time.
@@ -69,9 +69,8 @@ class RedditPosts:
         splits = self.split_subreddits()
         for split in splits:
             yield from self.grouped_split_iterator(split)
-        
 
-    def grouped_split_iterator(self, split: List[Community])->Iterator[pd.DataFrame]:
+    def grouped_split_iterator(self, split: List[Community]) -> Iterator[pd.DataFrame]:
         """Iterate over community text within a certain split.
 
             Yields all text content of each community at a time.
@@ -81,11 +80,11 @@ class RedditPosts:
 
         Yields:
             Iterator[pd.DataFrame]: All text content of a community (concatenated posts)
-        """        
+        """
         grouped_text = self.get_texts_by_subreddit(split)
         yield from self.subreddit_iterator(grouped_text, split)
 
-    def posts_split_iterator(self, split: List[Community])->Iterator[pd.DataFrame]:
+    def posts_split_iterator(self, split: List[Community]) -> Iterator[pd.DataFrame]:
         """Iterate over community posts within a certain split.
 
         Yields a all posts of a community at a time.
@@ -99,7 +98,9 @@ class RedditPosts:
         group = self.get_posts_in(split)
         yield from self.subreddit_iterator(group, split)
 
-    def subreddit_iterator(self, data: pd.DataFrame, split: List[Community])->Iterator[pd.DataFrame]:
+    def subreddit_iterator(
+        self, data: pd.DataFrame, split: List[Community]
+    ) -> Iterator[pd.DataFrame]:
         """Iterate over communities data in a split
 
         Args:
@@ -108,11 +109,11 @@ class RedditPosts:
 
         Yields:
             Iterator[pd.DataFrame]: Data from a single community
-        """        
+        """
         for s in split:
             filter_condition = data[self.subreddit_field] == s
             yield data[filter_condition].copy()
-            
+
     def get_texts_by_subreddit(self, split):
         df = self.get_posts_in(split)
         return self.texts_by_subreddit(df)
@@ -175,11 +176,11 @@ class RedditPosts:
             self.sink.write_text(text)
 
     # Falta ignorar aquellos comentarios sin texto
-    def get_posts_in(self, subreddits): 
+    def get_posts_in(self, subreddits):
         filter_condition = ds.field(self.subreddit_field).isin(subreddits)
         filtered_dataset = self.dataset.filter(filter_condition)
         df = filtered_dataset.to_table().to_pandas()
-        df[self.text_field] = self.texts_from(df)  
+        df[self.text_field] = self.texts_from(df)
         return df
 
     def texts_by_subreddit(self, df):

@@ -105,12 +105,14 @@ class DimensionGenerator:
             self.vectors.loc[seed_pair[1]].to_numpy()
             - self.vectors.loc[seed_pair[0]].to_numpy()
         )
-        
-        directions = self.sorted_nn_directions(seed_direction)
-        augmented_directions = self.augmentation_algorithm(seed_pair, seed_direction, directions)
+
+        sorted_directions = self.sorted_nn_directions(seed_direction)
+        augmented_directions = self.augmentation_algorithm(
+            seed_pair, seed_direction, sorted_directions
+        )
         return np.sum(augmented_directions.to_numpy(), axis=0)
-    
-    def sorted_nn_directions(self, seed_direction: np.array)->np.array:
+
+    def sorted_nn_directions(self, seed_direction: np.array) -> np.array:
         """Sort nearest neighbours directions by cosine silarity with seed direction
 
         Args:
