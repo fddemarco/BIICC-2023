@@ -149,7 +149,7 @@ def dimen_name():
 
 @pytest.fixture()
 def scores(embeddings, seeds, dimen_name):
-    generator = DimensionGenerator(embeddings, nn_n=10, k=10)
+    generator = DimensionGenerator(embeddings, nn_n=10, k=10, chunk_size=10)
     return generator.get_scores_from_seeds(seeds, [dimen_name])[dimen_name]
 
 

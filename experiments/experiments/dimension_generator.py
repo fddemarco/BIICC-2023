@@ -31,7 +31,9 @@ def similarity_matrix(vectors: pd.DataFrame) -> npt.NDArray[np.floating]:
 class DimensionGenerator:
     """A class to generate d-ness scores from seed pairs."""
 
-    def __init__(self, vectors: pd.DataFrame, nn_n: int = 10, k: int = 10):
+    def __init__(
+        self, vectors: pd.DataFrame, nn_n: int = 10, k: int = 10, chunk_size: int = 512
+    ):
         """Initialize a d-ness score generator with input data.
 
         Args:
@@ -40,12 +42,15 @@ class DimensionGenerator:
             Defaults to 10.
             k (int, optional): Number of directions used to create the dimension.
             Defaults to 10.
+            chunk_size (int, optional): Processing chunk size for larger-than-memory data.
+            Defaults to 512.
         """
         self.vectors = pd.DataFrame(
             normalize(vectors, norm="l2", axis=1), index=vectors.index
         )
         self.nn_n = min(len(vectors), nn_n)
         self.k = k
+        self.chunk_size = chunk_size
 
     def nearest_neighbours_directions(self) -> pd.DataFrame:
         """This is based on the aforementioned idea that we are looking for
@@ -55,23 +60,12 @@ class DimensionGenerator:
             pd.DataFrame: the set of all pairs of communities (c1, c2) such that c1 != c2
             and c2 is one of the nn_n nearest neighbours to c1. (nn_n = 10 by default)
         """
-        comm_names = list(self.vectors.index)
         matrix = similarity_matrix(self.vectors)
 
         kth_largest_values = np.partition(matrix, -self.nn_n, axis=1)[:, -self.nn_n]
         indices_to_calc = np.where(matrix >= kth_largest_values[:, np.newaxis])
 
-        pair_names = [
-            (comm_names[c1], comm_names[c2]) for c1, c2 in zip(*indices_to_calc)
-        ]
-        pairs_difference = [
-            self.vectors.iloc[c2] - self.vectors.iloc[c1]
-            for c1, c2 in zip(*indices_to_calc)
-        ]
-
-        return pd.DataFrame(
-            index=pd.MultiIndex.from_tuples(pair_names), data=pairs_difference
-        )
+        return list(zip(*indices_to_calc))
 
     def generate_dimensions_from_seeds(
         self, seeds: Sequence[SeedPair]
@@ -121,20 +115,35 @@ class DimensionGenerator:
         Returns:
             np.array: Sorted Nearest neighbours directions
         """
-        nn_directions = self.nearest_neighbours_directions()
+        nn_directions_indices = self.nearest_neighbours_directions()
 
         # 1-D Vector. No me queda claro por que hace producto interno en vez de cosine similarity
         # los vectores no estan normalizados, asi que no son equivalentes
-        seed_similarities = np.dot(nn_directions, seed_direction.T)
+        seed_similarities = []
+        n_rows = len(nn_directions_indices)
+        for i in range(0, n_rows, self.chunk_size):
+            chunk_idx = nn_directions_indices[i : min(i + self.chunk_size, n_rows)]
+            pairs_difference = [
+                self.vectors.iloc[c2] - self.vectors.iloc[c1] for c1, c2 in chunk_idx
+            ]
+            similarities = np.dot(pairs_difference, seed_direction.T)
+            seed_similarities.extend(similarities)
+
+        seed_similarities = np.array(seed_similarities)
 
         # assert (seed_similarities >= -1).all()
         # assert (seed_similarities <= 1).all()
 
-        return nn_directions.iloc[
-            seed_similarities.argsort()[
-                ::-1
-            ]  # Sort DESC nearest neighbours by similarity
+        comm_names = list(self.vectors.index)
+        pair_names = [
+            (comm_names[c1], comm_names[c2]) for c1, c2 in nn_directions_indices
         ]
+        nn_directions = pd.DataFrame(
+            index=pd.MultiIndex.from_tuples(pair_names),
+            data=seed_similarities,
+            columns=["similarity"],
+        )
+        return nn_directions.sort_values("similarity", ascending=False)
 
     def augmentation_algorithm(
         self, seed_pair: SeedPair, seed_direction: np.array, directions: pd.DataFrame
@@ -171,9 +180,14 @@ class DimensionGenerator:
 
             i += 1
 
+        indices_to_calc = directions.index.tolist()
+        pairs_difference = [
+            self.vectors.loc[c2] - self.vectors.loc[c1] for c1, c2 in indices_to_calc
+        ]
+
         directions = pd.DataFrame(
-            index=pd.MultiIndex.from_tuples([seed_pair] + directions.index.tolist()),
-            data=np.concatenate([[seed_direction], directions.to_numpy()]),
+            index=pd.MultiIndex.from_tuples([seed_pair] + indices_to_calc),
+            data=np.concatenate([[seed_direction], pairs_difference]),
         )
         return directions.iloc[0 : self.k]
 
