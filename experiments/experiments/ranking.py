@@ -48,6 +48,7 @@ def dem_rep_field():
 class Ranking:
     @classmethod
     def from_pandas(cls, score_data):
+        score_data = score_data[score_data.index.isin(arxiv_waller_ranking())].copy()
         score_data = score_data.to_dict(orient="dict")[dem_rep_field()]
         return cls(score_data)
 
