@@ -122,8 +122,8 @@ class TestRanking:
         ],
     )
     def test_rbo_score(self, scores, expected_rbo):
-        ranking = Ranking(scores)
-        assert expected_rbo == pytest.approx(ranking.rbo_score(1.0))
+        ranking = Ranking(scores, p=1.0)
+        assert expected_rbo == pytest.approx(ranking.rbo_score())
 
     @pytest.mark.slow
     @pytest.mark.parametrize(

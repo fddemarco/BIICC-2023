@@ -47,16 +47,17 @@ def dem_rep_field():
 
 class Ranking:
     @classmethod
-    def from_pandas(cls, score_data):
+    def from_pandas(cls, score_data, p=1.0):
         score_data = score_data[score_data.index.isin(arxiv_waller_ranking())].copy()
         score_data = score_data.to_dict(orient="dict")[dem_rep_field()]
-        return cls(score_data)
+        return cls(score_data, p)
 
-    def __init__(self, ranking: dict):
+    def __init__(self, ranking: dict, p:int = 1.0):
         """
         :param ranking: Para cada subreddit, nos dice su score. {'Conservative': -0.228}
         """
         self.ranking = ranking
+        self.p = p
 
     def compare_ranking(self):
         classification_metrics = self.evaluate_classification_metrics()
@@ -183,37 +184,37 @@ class Ranking:
         res = stats.kendalltau(x, y)
         return res.statistic
 
-    def rbo_score(self, p=1.0):
+    def rbo_score(self):
         """
         0 = disjoint,
         1 = identical
         """
         predicted_ranking = self.subreddits_sorted_by_score_desc()
         true_ranking = self.arxiv_waller_ranking()
-        res = calc_rbo(predicted_ranking, true_ranking, p)
+        res = calc_rbo(predicted_ranking, true_ranking, self.p)
         return res
 
-    def half_and_half_rbo_score(self, p=1.0):
+    def half_and_half_rbo_score(self):
         predicted_ranking = self.subreddits_sorted_by_score_desc()
         true_ranking = self.arxiv_waller_ranking()
         n = len(predicted_ranking) // 2
 
-        fst_half_score = calc_rbo(predicted_ranking[:n], true_ranking[:n], p)
+        fst_half_score = calc_rbo(predicted_ranking[:n], true_ranking[:n], self.p)
         snd_half_score = calc_rbo(
             split_and_reverse(n, predicted_ranking),
             split_and_reverse(n, true_ranking),
-            p,
+            self.p,
         )
         return calc_mean(fst_half_score, snd_half_score)
 
-    def two_way_rbo_score(self, p=1.0):
+    def two_way_rbo_score(self):
         predicted_ranking = self.subreddits_sorted_by_score_desc()
         true_ranking = self.arxiv_waller_ranking()
-        desc_way_score = calc_rbo(predicted_ranking, true_ranking, p)
+        desc_way_score = calc_rbo(predicted_ranking, true_ranking, self.p)
 
         predicted_ranking.reverse()
         true_ranking.reverse()
-        asc_way_score = calc_rbo(predicted_ranking, true_ranking, p)
+        asc_way_score = calc_rbo(predicted_ranking, true_ranking, self.p)
         return calc_mean(desc_way_score, asc_way_score)
 
     def t_student_p_value(self):
