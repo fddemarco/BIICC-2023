@@ -105,6 +105,20 @@ class DimensionGenerator:
             self.vectors.loc[seed_pair[1]].to_numpy()
             - self.vectors.loc[seed_pair[0]].to_numpy()
         )
+        
+        directions = self.sorted_nn_directions(seed_direction)
+        augmented_directions = self.augmentation_algorithm(seed_pair, seed_direction, directions)
+        return np.sum(augmented_directions.to_numpy(), axis=0)
+    
+    def sorted_nn_directions(self, seed_direction: np.array)->np.array:
+        """Sort nearest neighbours directions by cosine silarity with seed direction
+
+        Args:
+            seed_direction (np.array): Seed direction
+
+        Returns:
+            np.array: Sorted Nearest neighbours directions
+        """
         nn_directions = self.nearest_neighbours_directions()
 
         # 1-D Vector. No me queda claro por que hace producto interno en vez de cosine similarity
@@ -114,14 +128,11 @@ class DimensionGenerator:
         # assert (seed_similarities >= -1).all()
         # assert (seed_similarities <= 1).all()
 
-        directions = nn_directions.iloc[
+        return nn_directions.iloc[
             seed_similarities.argsort()[
                 ::-1
             ]  # Sort DESC nearest neighbours by similarity
         ]
-
-        directions = self.augmentation_algorithm(seed_pair, seed_direction, directions)
-        return np.sum(directions.to_numpy(), axis=0)
 
     def augmentation_algorithm(
         self, seed_pair: SeedPair, seed_direction: np.array, directions: pd.DataFrame
