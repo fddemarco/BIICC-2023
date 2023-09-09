@@ -33,7 +33,7 @@ class DimensionGenerator:
     """A class to generate d-ness scores from seed pairs."""
 
     def __init__(
-        self, vectors: pd.DataFrame, nn_n: int = 10, k: int = 10, chunk_size: int = 512
+        self, vectors: pd.DataFrame, nn_n: int = 10, k: int = 10, chunk_size: int = None
     ):
         """Initialize a d-ness score generator with input data.
 
@@ -44,14 +44,18 @@ class DimensionGenerator:
             k (int, optional): Number of directions used to create the dimension.
             Defaults to 10.
             chunk_size (int, optional): Processing chunk size for larger-than-memory data.
-            Defaults to 512.
+            If the vector length is less than or equal to 500, it defaults to 8; 
+            otherwise, it defaults to 1.
         """
         self.vectors = pd.DataFrame(
             normalize(vectors, norm="l2", axis=1), index=vectors.index
         )
         self.nn_n = min(len(vectors), nn_n)
         self.k = k
-        self.chunk_size = chunk_size
+        if chunk_size is None:
+            self.chunk_size = 8 if len(vectors[0]) <= 500 else 1 
+        else:
+            self.chunk_size = chunk_size
 
     def generate_dimensions_from_seeds(
         self, seeds: Sequence[CommunityPair]
