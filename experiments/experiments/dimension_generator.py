@@ -9,8 +9,9 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 
-SeedPair: TypeAlias = Tuple[str, str]
+CommunityPair: TypeAlias = Tuple[str, str]
 Dimension: TypeAlias = npt.NDArray[np.floating]
+Indices: TypeAlias = Tuple[int, int]
 
 
 def similarity_matrix(vectors: pd.DataFrame) -> npt.NDArray[np.floating]:
@@ -52,35 +53,20 @@ class DimensionGenerator:
         self.k = k
         self.chunk_size = chunk_size
 
-    def nearest_neighbours_directions(self) -> pd.DataFrame:
-        """This is based on the aforementioned idea that we are looking for
-        pairs of communities that are very similar, but differ only in the target concept.
-
-        Returns:
-            pd.DataFrame: the set of all pairs of communities (c1, c2) such that c1 != c2
-            and c2 is one of the nn_n nearest neighbours to c1. (nn_n = 10 by default)
-        """
-        matrix = similarity_matrix(self.vectors)
-
-        kth_largest_values = np.partition(matrix, -self.nn_n, axis=1)[:, -self.nn_n]
-        indices_to_calc = np.where(matrix >= kth_largest_values[:, np.newaxis])
-
-        return list(zip(*indices_to_calc))
-
     def generate_dimensions_from_seeds(
-        self, seeds: Sequence[SeedPair]
+        self, seeds: Sequence[CommunityPair]
     ) -> List[Dimension]:
         """Apply seed augmentation to all dimension seed pairs.
 
         Args:
-            seeds (Sequence[SeedPair]): List of dimension seed pairs.
+            seeds (Sequence[CommunityPair]): List of dimension seed pairs.
 
         Returns:
             List[Dimension]: List of augmented dimension representation.
         """
         return [self.augment_seed_direction(x) for x in seeds]
 
-    def augment_seed_direction(self, seed_pair: SeedPair) -> Dimension:
+    def augment_seed_direction(self, seed_pair: CommunityPair) -> Dimension:
         """Augment seed pair direction for a more robust representation of the dimension.
 
         All pairs are ranked based on the cosine similarity of their vector difference
@@ -88,7 +74,7 @@ class DimensionGenerator:
         are then selected greedily.
 
         Args:
-            seed_pair (SeedPair): Dimension seed pair.
+            seed_pair (CommunityPair): Dimension seed pair.
 
         Returns:
             Dimension: Augmented dimension representation.
@@ -106,38 +92,38 @@ class DimensionGenerator:
         )
         return np.sum(augmented_directions.to_numpy(), axis=0)
 
-    def sorted_nn_directions(self, seed_direction: np.array) -> np.array:
-        """Sort nearest neighbours directions by cosine silarity with seed direction
+    def nearest_neighbours_directions(self) -> Tuple[List[int], List[int]]:
+        """This is based on the aforementioned idea that we are looking for
+        pairs of communities that are very similar, but differ only in the target concept.
+
+        Returns:
+            Tuple[List[int],List[int]]: the set of all pairs of communities (c1, c2) such that c1 != c2
+            and c2 is one of the nn_n nearest neighbours to c1. (nn_n = 10 by default)
+        """
+        matrix = similarity_matrix(self.vectors)
+
+        n_largest_values = np.partition(matrix, -self.nn_n, axis=1)[:, -self.nn_n]
+        indices_to_calc = np.where(matrix >= n_largest_values[:, np.newaxis])
+
+        return indices_to_calc
+
+    def retrieve_vectors(self, xs: List[Indices], i, k):
+        return np.array([self.vectors.iloc[c] for c in xs[i:k]])
+
+    def sorted_nn_directions(self, seed_direction: np.array) -> pd.DataFrame:
+        """Sort nearest neighbours directions by cosine similarity with seed direction
 
         Args:
             seed_direction (np.array): Seed direction
 
         Returns:
-            np.array: Sorted Nearest neighbours directions
+            pd.DataFrame: Sorted Nearest neighbours directions
         """
+
         nn_directions_indices = self.nearest_neighbours_directions()
+        pair_names = self.nn_names(nn_directions_indices)
+        seed_similarities = self.nn_similarities(nn_directions_indices, seed_direction)
 
-        # 1-D Vector. No me queda claro por que hace producto interno en vez de cosine similarity
-        # los vectores no estan normalizados, asi que no son equivalentes
-        seed_similarities = []
-        n_rows = len(nn_directions_indices)
-        for i in range(0, n_rows, self.chunk_size):
-            chunk_idx = nn_directions_indices[i : min(i + self.chunk_size, n_rows)]
-            pairs_difference = [
-                self.vectors.iloc[c2] - self.vectors.iloc[c1] for c1, c2 in chunk_idx
-            ]
-            similarities = np.dot(pairs_difference, seed_direction.T)
-            seed_similarities.extend(similarities)
-
-        seed_similarities = np.array(seed_similarities)
-
-        # assert (seed_similarities >= -1).all()
-        # assert (seed_similarities <= 1).all()
-
-        comm_names = list(self.vectors.index)
-        pair_names = [
-            (comm_names[c1], comm_names[c2]) for c1, c2 in nn_directions_indices
-        ]
         nn_directions = pd.DataFrame(
             index=pd.MultiIndex.from_tuples(pair_names),
             data=seed_similarities,
@@ -145,8 +131,56 @@ class DimensionGenerator:
         )
         return nn_directions.sort_values("similarity", ascending=False)
 
+    def nn_similarities(
+        self,
+        nn_directions_indices: Tuple[List[int], List[int]],
+        seed_direction: np.array,
+    ) -> np.array:
+        """Calculate nearest neighbours cosine similarity with seed direction
+
+        Args:
+            nn_directions_indices (Tuple[List[int],List[int]]): List of nearest neighbours indices
+            seed_direction (np.array): Seed direction
+
+        Returns:
+            np.array: Nearest neighbours cosine similarity with seed direction
+        """
+        # 1-D Vector. No me queda claro por que hace producto interno en vez de cosine similarity
+        # los vectores no estan normalizados, asi que no son equivalentes
+        seed_similarities = []
+        c1_indices, c2_indices = nn_directions_indices
+        n_rows = len(c1_indices)
+        for i in range(0, n_rows, self.chunk_size):
+            k = min(i + self.chunk_size, n_rows)
+            chunk_xs1 = self.retrieve_vectors(c1_indices, i, k)
+            chunk_xs2 = self.retrieve_vectors(c2_indices, i, k)
+
+            pairs_difference = chunk_xs2 - chunk_xs1
+
+            similarities = np.dot(pairs_difference, seed_direction.T)
+            seed_similarities.extend(similarities)
+
+        return np.array(seed_similarities)
+
+    def nn_names(self, nn_directions_indices: List[Indices]) -> List[CommunityPair]:
+        """Retrieve names of nearest neighbours pairs
+
+        Args:
+            nn_directions_indices (List[Indices]): List of nearest neighbours indices
+
+        Returns:
+            List[CommunityPair]: List of community pairs
+        """
+        comm_names = list(self.vectors.index)
+        return [
+            (comm_names[c1], comm_names[c2]) for c1, c2 in zip(*nn_directions_indices)
+        ]
+
     def augmentation_algorithm(
-        self, seed_pair: SeedPair, seed_direction: np.array, directions: pd.DataFrame
+        self,
+        seed_pair: CommunityPair,
+        seed_direction: np.array,
+        sorted_directions: pd.DataFrame,
     ) -> pd.DataFrame:
         """Seed augmentation algorithm.
 
@@ -157,9 +191,9 @@ class DimensionGenerator:
         the dimension.
 
         Args:
-            seed_pair (SeedPair): Dimension seed pair.
+            seed_pair (CommunityPair): Dimension seed pair.
             seed_direction (np.array): Seed pair direction.
-            directions (pd.DataFrame): DESC Sorted nearest neighbours directions.
+            sorted_directions (pd.DataFrame): DESC Sorted nearest neighbours directions.
 
         Returns:
             pd.DataFrame: Augmented seed pair dimension directions.
@@ -168,34 +202,34 @@ class DimensionGenerator:
 
         # Este algoritmo hay que revisarlo.
         i = -1  # filter out seed pair
-        while i < len(directions) and i < self.k + 1:
-            ban_list.extend(directions.index[i])
+        while i < len(sorted_directions) and i < self.k + 1:
+            ban_list.extend(sorted_directions.index[i])
 
-            c1 = directions.index.get_level_values(0)
-            c2 = directions.index.get_level_values(1)
-            directions = directions[
-                (np.arange(0, len(directions)) <= i)
+            c1 = sorted_directions.index.get_level_values(0)
+            c2 = sorted_directions.index.get_level_values(1)
+            sorted_directions = sorted_directions[
+                (np.arange(0, len(sorted_directions)) <= i)
                 | ((~c1.isin(ban_list)) & (~c2.isin(ban_list)))
             ]
 
             i += 1
 
-        indices_to_calc = directions.index.tolist()
+        indices_to_calc = sorted_directions.index.tolist()
         pairs_difference = [
             self.vectors.loc[c2] - self.vectors.loc[c1] for c1, c2 in indices_to_calc
         ]
 
-        directions = pd.DataFrame(
+        sorted_directions = pd.DataFrame(
             index=pd.MultiIndex.from_tuples([seed_pair] + indices_to_calc),
             data=np.concatenate([[seed_direction], pairs_difference]),
         )
-        return directions.iloc[0 : self.k]
+        return sorted_directions.iloc[0 : self.k]
 
-    def get_scores_from_seeds(self, seeds: List[SeedPair], names: List[str]):
+    def get_scores_from_seeds(self, seeds: List[CommunityPair], names: List[str]):
         """Calculate dimensions scores.
 
         Args:
-            seeds (List[SeedPair]): List of dimension seed pairs.
+            seeds (List[CommunityPair]): List of dimension seed pairs.
             names (List[str]): List of dimension names.
 
         Returns:

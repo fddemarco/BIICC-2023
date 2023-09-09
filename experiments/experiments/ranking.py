@@ -52,7 +52,7 @@ class Ranking:
         score_data = score_data.to_dict(orient="dict")[dem_rep_field()]
         return cls(score_data, p)
 
-    def __init__(self, ranking: dict, p:int = 1.0):
+    def __init__(self, ranking: dict, p: int = 1.0):
         """
         :param ranking: Para cada subreddit, nos dice su score. {'Conservative': -0.228}
         """
