@@ -166,3 +166,14 @@ class TestDimensionGenerator:
     def test_02(self, scores):
         values_in_range = (scores <= 1) & (scores >= -1)
         assert values_in_range.all()
+
+    @pytest.mark.wip
+    def test_03(self, embeddings, seeds):
+        
+        generator = DimensionGenerator(embeddings, nn_n=10, k=10, chunk_size=10)
+        directions = generator.nearest_neighbours_directions()
+        seed_direction = generator.calculate_direction(seeds[0])
+        similarities = generator.nn_similarities(directions, seed_direction)
+
+        assert (similarities <= 1).all()
+        assert (similarities >= -1).all()

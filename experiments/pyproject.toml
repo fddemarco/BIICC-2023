@@ -30,8 +30,8 @@ pylint = "^2.17.4"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-m 'not slow'"
-markers = "slow: Annotate the test as one that lingers."
+addopts = "-m 'not slow and not wip'"
+markers = ["slow: Annotate the test as one that lingers", "wip: work-in progress feature"] 
 testpaths = [
     "tests",
     "integration",

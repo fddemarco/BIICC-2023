@@ -84,17 +84,27 @@ class DimensionGenerator:
             Dimension: Augmented dimension representation.
         """
 
-        # 1-D Vector
-        seed_direction = (
-            self.vectors.loc[seed_pair[1]].to_numpy()
-            - self.vectors.loc[seed_pair[0]].to_numpy()
-        )
+        seed_direction = self.calculate_direction(seed_pair)
 
         sorted_directions = self.sorted_nn_directions(seed_direction)
         augmented_directions = self.augmentation_algorithm(
             seed_pair, seed_direction, sorted_directions
         )
         return np.sum(augmented_directions.to_numpy(), axis=0)
+    
+    def calculate_direction(self, community_pair: CommunityPair) -> np.array:
+        """Calculate direction between community pair.
+
+        Args:
+            community_pair (CommunityPair): Input data.
+
+        Returns:
+            np.array: Direction between community pair.
+        """
+        return (
+            self.vectors.loc[community_pair[1]].to_numpy()
+            - self.vectors.loc[community_pair[0]].to_numpy()
+        )
 
     def nearest_neighbours_directions(self) -> Tuple[List[int], List[int]]:
         """This is based on the aforementioned idea that we are looking for
