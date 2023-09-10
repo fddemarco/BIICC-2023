@@ -73,18 +73,19 @@ class DimensionGenerator:
             chunk_size = 8 if len(vectors[0]) <= 500 else 1
         self.chunk_size = chunk_size
 
-    def generate_dimensions_from_seeds(
-        self, seeds: Sequence[CommunityPair]
-    ) -> List[Direction]:
-        """Apply seed augmentation to all dimension seed pairs.
-
-        Args:
-            seeds (Sequence[CommunityPair]): List of dimension seed pairs.
+    def value(self):
+        """Calculate dimensions scores.
 
         Returns:
-            List[Direction]: List of augmented dimension representation.
+            pd.DataFrame: Dimensions scores DataFrame.
         """
-        return [self.augment_seed_direction(x) for x in seeds]
+        columns = {}
+        dimensions = [self.augment_seed_direction(x) for x in self.seeds]
+        for name, dimension in zip(self.names, dimensions):
+            columns[name] = np.dot(
+                self.vectors.to_numpy(), dimension / np.linalg.norm(dimension)
+            )
+        return pd.DataFrame(columns, index=self.vectors.index)
 
     def augment_seed_direction(self, seed_pair: CommunityPair) -> Direction:
         """Augment seed pair direction for a more robust representation of the dimension.
@@ -249,22 +250,6 @@ class DimensionGenerator:
             data=np.concatenate([[seed_direction], pairs_difference]),
         )
         return sorted_directions.iloc[0 : self.k]
-
-    def value(self):
-        """Calculate dimensions scores.
-
-        Returns:
-            pd.DataFrame: Dimensions scores DataFrame.
-        """
-        columns = {}
-
-        dimensions = self.generate_dimensions_from_seeds(self.seeds)
-        for name, dimension in zip(self.names, dimensions):
-            columns[name] = np.dot(
-                self.vectors.to_numpy(), dimension / np.linalg.norm(dimension)
-            )
-
-        return pd.DataFrame(columns, index=self.vectors.index)
 
 
 class DimensionGeneratorBis(DimensionGenerator):

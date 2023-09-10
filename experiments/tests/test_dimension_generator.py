@@ -166,8 +166,9 @@ def similarities_bis(embeddings, seeds):
 
 @pytest.fixture()
 def scores(embeddings, seeds, dimen_name):
-    generator = DimensionGenerator(embeddings,seeds, [dimen_name], 
-                                   nn_n=10, k=10, chunk_size=10)
+    generator = DimensionGenerator(
+        embeddings, seeds, [dimen_name], nn_n=10, k=10, chunk_size=10
+    )
     ranking = generator.value()[dimen_name]
     return ranking.sort_values()
 
