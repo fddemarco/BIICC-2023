@@ -169,7 +169,7 @@ class DimensionGenerator:
 
             pairs_difference = chunk_xs2 - chunk_xs1
 
-            similarities = np.dot(pairs_difference, seed_direction.T)
+            similarities = np.dot(pairs_difference, seed_direction)
             seed_similarities.extend(similarities)
 
         return seed_similarities
@@ -228,7 +228,8 @@ class DimensionGenerator:
 
         indices_to_calc = sorted_directions.index.tolist()
         pairs_difference = [
-            self.vectors.loc[c2] - self.vectors.loc[c1] for c1, c2 in indices_to_calc
+            self.vectors.loc[c2] - self.vectors.loc[c1] 
+            for c1, c2 in indices_to_calc
         ]
 
         sorted_directions = pd.DataFrame(
@@ -256,6 +257,44 @@ class DimensionGenerator:
             )
 
         return pd.DataFrame(columns, index=self.vectors.index)
+
+
+class DimensionGeneratorBis(DimensionGenerator):
+    def nn_similarities(
+            self,
+            nn_directions_indices: IndexList2D,
+            seed_direction: Direction,
+        ) -> List[float]:
+            """Calculate nearest neighbours cosine similarity with seed direction
+
+            Args:
+                nn_directions_indices (IndexList2D): List of nearest neighbours indices
+                seed_direction (Direction): Seed direction
+
+            Returns:
+                List[float]: Nearest neighbours cosine similarity with seed direction
+            """
+            # 1-D Vector. No me queda claro por que hace producto interno en vez de cosine similarity
+            # los vectores no estan normalizados, asi que no son equivalentes
+            seed_similarities = []
+            c1_indices, c2_indices = nn_directions_indices
+            n_rows = len(c1_indices)
+
+            seed_direction = seed_direction / np.linalg.norm(seed_direction)
+
+            for i in range(0, n_rows, self.chunk_size):
+                k = min(i + self.chunk_size, n_rows)
+                chunk_xs1 = self.retrieve_vectors(c1_indices, i, k)
+                chunk_xs2 = self.retrieve_vectors(c2_indices, i, k)
+
+                pairs_difference = chunk_xs2 - chunk_xs1
+                pairs_difference = normalize(pairs_difference, norm='l2', axis=1)
+
+                similarities = np.dot(pairs_difference, seed_direction)
+                seed_similarities.extend(similarities)
+
+            return seed_similarities
+
 
 
 import numpy as np
