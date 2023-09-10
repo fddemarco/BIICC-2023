@@ -154,7 +154,7 @@ def similarities(embeddings, seeds):
     directions = generator.nearest_neighbours_directions()
     seed_direction = generator.calculate_direction(seeds[0])
     return generator.nn_similarities(directions, seed_direction)
-    
+
 
 @pytest.fixture()
 def similarities_bis(embeddings, seeds):
@@ -163,11 +163,14 @@ def similarities_bis(embeddings, seeds):
     seed_direction = generator.calculate_direction(seeds[0])
     return generator.nn_similarities(directions, seed_direction)
 
+
 @pytest.fixture()
 def scores(embeddings, seeds, dimen_name):
-    generator = DimensionGenerator(embeddings, nn_n=10, k=10, chunk_size=10)
-    ranking = generator.get_scores_from_seeds(seeds, [dimen_name])[dimen_name]
+    generator = DimensionGenerator(embeddings,seeds, [dimen_name], 
+                                   nn_n=10, k=10, chunk_size=10)
+    ranking = generator.value()[dimen_name]
     return ranking.sort_values()
+
 
 @pytest.fixture()
 def scores_bis(embeddings, seeds, dimen_name):
@@ -182,12 +185,13 @@ def waller_scores(embeddings, seeds, dimen_name):
     ranking = dimen_generator.get_scores(seeds, [dimen_name])[dimen_name]
     return ranking.sort_values()
 
+
 class TestDimensionGenerator:
     def test_scores(self, scores, waller_scores):
         tm.assert_series_equal(scores, waller_scores)
 
     def test_score_in_range(self, scores):
-        assert (scores <= 1).all() 
+        assert (scores <= 1).all()
         assert (scores >= -1).all()
 
     @pytest.mark.wip
@@ -200,7 +204,7 @@ class TestDimensionGeneratorBis:
     @pytest.mark.wip
     def test_order(self, scores, scores_bis):
         assert (scores.index == scores_bis.index).all()
-    
+
     @pytest.mark.wip
     def test_similarities(self, similarities, similarities_bis):
-        assert (similarities == similarities_bis)
+        assert similarities == similarities_bis

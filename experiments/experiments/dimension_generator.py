@@ -36,29 +36,42 @@ class DimensionGenerator:
     """A class to generate d-ness scores from seed pairs."""
 
     def __init__(
-        self, vectors: pd.DataFrame, nn_n: int = 10, k: int = 10, chunk_size: int = None
+        self,
+        vectors: pd.DataFrame,
+        seeds: List[CommunityPair],
+        names: List[Community],
+        nn_n: int = 10,
+        k: int = 10,
+        chunk_size: int = None,
     ):
         """Initialize a d-ness score generator with input data.
 
         Args:
             vectors (pd.DataFrame): Input data.
-            nn_n (int, optional): Nearest Neighbours Number of pairs to generate per community.
-            Defaults to 10.
-            k (int, optional): Number of directions used to create the dimension.
-            Defaults to 10.
-            chunk_size (int, optional): Processing chunk size for larger-than-memory data.
-            If the vector length is less than or equal to 500, it defaults to 8; 
-            otherwise, it defaults to 1.
+
+            seeds (List[CommunityPair]): List of dimension seed pairs.
+
+            names (List[str]): List of dimension names.
+
+            nn_n (int, optional): Nearest Neighbours Number of pairs to
+            generate per community. Defaults to 10.
+
+            k (int, optional): Number of directions used to
+            create the dimension. Defaults to 10.
+
+            chunk_size (int, optional): Processing chunk size for
+            larger-than-memory data.
         """
         self.vectors = pd.DataFrame(
             normalize(vectors, norm="l2", axis=1), index=vectors.index
         )
+        self.seeds = seeds
+        self.names = names
         self.nn_n = min(len(vectors), nn_n)
         self.k = k
         if chunk_size is None:
-            self.chunk_size = 8 if len(vectors[0]) <= 500 else 1 
-        else:
-            self.chunk_size = chunk_size
+            chunk_size = 8 if len(vectors[0]) <= 500 else 1
+        self.chunk_size = chunk_size
 
     def generate_dimensions_from_seeds(
         self, seeds: Sequence[CommunityPair]
@@ -93,7 +106,7 @@ class DimensionGenerator:
             seed_pair, seed_direction, sorted_directions
         )
         return np.sum(augmented_directions.to_numpy(), axis=0)
-    
+
     def calculate_direction(self, community_pair: CommunityPair) -> Direction:
         """Calculate direction between community pair.
 
@@ -228,8 +241,7 @@ class DimensionGenerator:
 
         indices_to_calc = sorted_directions.index.tolist()
         pairs_difference = [
-            self.vectors.loc[c2] - self.vectors.loc[c1] 
-            for c1, c2 in indices_to_calc
+            self.vectors.loc[c2] - self.vectors.loc[c1] for c1, c2 in indices_to_calc
         ]
 
         sorted_directions = pd.DataFrame(
@@ -238,20 +250,16 @@ class DimensionGenerator:
         )
         return sorted_directions.iloc[0 : self.k]
 
-    def get_scores_from_seeds(self, seeds: List[CommunityPair], names: List[Community]):
+    def value(self):
         """Calculate dimensions scores.
-
-        Args:
-            seeds (List[CommunityPair]): List of dimension seed pairs.
-            names (List[str]): List of dimension names.
 
         Returns:
             pd.DataFrame: Dimensions scores DataFrame.
         """
         columns = {}
 
-        dimensions = self.generate_dimensions_from_seeds(seeds)
-        for name, dimension in zip(names, dimensions):
+        dimensions = self.generate_dimensions_from_seeds(self.seeds)
+        for name, dimension in zip(self.names, dimensions):
             columns[name] = np.dot(
                 self.vectors.to_numpy(), dimension / np.linalg.norm(dimension)
             )
@@ -261,40 +269,39 @@ class DimensionGenerator:
 
 class DimensionGeneratorBis(DimensionGenerator):
     def nn_similarities(
-            self,
-            nn_directions_indices: IndexList2D,
-            seed_direction: Direction,
-        ) -> List[float]:
-            """Calculate nearest neighbours cosine similarity with seed direction
+        self,
+        nn_directions_indices: IndexList2D,
+        seed_direction: Direction,
+    ) -> List[float]:
+        """Calculate nearest neighbours cosine similarity with seed direction
 
-            Args:
-                nn_directions_indices (IndexList2D): List of nearest neighbours indices
-                seed_direction (Direction): Seed direction
+        Args:
+            nn_directions_indices (IndexList2D): List of nearest neighbours indices
+            seed_direction (Direction): Seed direction
 
-            Returns:
-                List[float]: Nearest neighbours cosine similarity with seed direction
-            """
-            # 1-D Vector. No me queda claro por que hace producto interno en vez de cosine similarity
-            # los vectores no estan normalizados, asi que no son equivalentes
-            seed_similarities = []
-            c1_indices, c2_indices = nn_directions_indices
-            n_rows = len(c1_indices)
+        Returns:
+            List[float]: Nearest neighbours cosine similarity with seed direction
+        """
+        # 1-D Vector. No me queda claro por que hace producto interno en vez de cosine similarity
+        # los vectores no estan normalizados, asi que no son equivalentes
+        seed_similarities = []
+        c1_indices, c2_indices = nn_directions_indices
+        n_rows = len(c1_indices)
 
-            seed_direction = seed_direction / np.linalg.norm(seed_direction)
+        seed_direction = seed_direction / np.linalg.norm(seed_direction)
 
-            for i in range(0, n_rows, self.chunk_size):
-                k = min(i + self.chunk_size, n_rows)
-                chunk_xs1 = self.retrieve_vectors(c1_indices, i, k)
-                chunk_xs2 = self.retrieve_vectors(c2_indices, i, k)
+        for i in range(0, n_rows, self.chunk_size):
+            k = min(i + self.chunk_size, n_rows)
+            chunk_xs1 = self.retrieve_vectors(c1_indices, i, k)
+            chunk_xs2 = self.retrieve_vectors(c2_indices, i, k)
 
-                pairs_difference = chunk_xs2 - chunk_xs1
-                pairs_difference = normalize(pairs_difference, norm='l2', axis=1)
+            pairs_difference = chunk_xs2 - chunk_xs1
+            pairs_difference = normalize(pairs_difference, norm="l2", axis=1)
 
-                similarities = np.dot(pairs_difference, seed_direction)
-                seed_similarities.extend(similarities)
+            similarities = np.dot(pairs_difference, seed_direction)
+            seed_similarities.extend(similarities)
 
-            return seed_similarities
-
+        return seed_similarities
 
 
 import numpy as np

@@ -113,14 +113,17 @@ class Experiment:
         embeddings = reddit_posts.generate_embeddings_for(model)
         embeddings.to_csv(self._embedding_pathname)
 
-    def get_scores(self, data, seeds=None) -> pd.DataFrame:
+    def get_scores(self, data, seeds=None, names=None) -> pd.DataFrame:
         """
         Generates scores from DATA using SEEDS
         """
-        if seeds is None:  # TODO: parametrizar names
+        if seeds is None:
             seeds = [("democrats", "Conservative")]
-        generator = dg.DimensionGenerator(data)
-        return generator.get_scores_from_seeds([self._dem_rep_field], seeds)
+
+        if names is None:
+            names = [self._dem_rep_field]
+        generator = dg.DimensionGenerator(data, names, seeds)
+        return generator.value()
 
     def apply_compare(self):
         """
