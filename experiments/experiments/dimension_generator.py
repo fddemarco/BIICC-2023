@@ -42,7 +42,7 @@ class DimensionGenerator:
         names: List[Community],
         nn_n: int = 10,
         k: int = 10,
-        chunk_size: int = None,
+        chunk_size: int = 8,
     ):
         """Initialize a d-ness score generator with input data.
 
@@ -60,7 +60,7 @@ class DimensionGenerator:
             create the dimension. Defaults to 10.
 
             chunk_size (int, optional): Processing chunk size for
-            larger-than-memory data.
+            larger-than-memory data. Defaults to 8.
         """
         self.vectors = pd.DataFrame(
             normalize(vectors, norm="l2", axis=1), index=vectors.index
@@ -69,8 +69,6 @@ class DimensionGenerator:
         self.names = names
         self.nn_n = min(len(vectors), nn_n)
         self.k = k
-        if chunk_size is None:
-            chunk_size = 8 if len(vectors[0]) <= 500 else 1
         self.chunk_size = chunk_size
 
     def value(self):
@@ -134,9 +132,6 @@ class DimensionGenerator:
         n_largest_values = np.partition(matrix, -self.nn_n, axis=1)[:, -self.nn_n]
         return np.where(matrix >= n_largest_values[:, np.newaxis])
 
-    def retrieve_vectors(self, xs: List[Index], i, k):
-        return np.array([self.vectors.iloc[c] for c in xs[i:k]])
-
     def sorted_nn_directions(self, seed_direction: Direction) -> pd.DataFrame:
         """Sort nearest neighbours directions by cosine similarity with seed direction
 
@@ -178,8 +173,8 @@ class DimensionGenerator:
         n_rows = len(c1_indices)
         for i in range(0, n_rows, self.chunk_size):
             k = min(i + self.chunk_size, n_rows)
-            chunk_xs1 = self.retrieve_vectors(c1_indices, i, k)
-            chunk_xs2 = self.retrieve_vectors(c2_indices, i, k)
+            chunk_xs1 = self.vectors.to_numpy()[c1_indices[i: k]]
+            chunk_xs2 = self.vectors.to_numpy()[c2_indices[i: k]]
 
             pairs_difference = chunk_xs2 - chunk_xs1
 
