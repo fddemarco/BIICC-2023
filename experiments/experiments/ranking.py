@@ -434,8 +434,9 @@ def arxiv_waller_ranking_for(subreddits):
     return [s for s in arxiv_waller_ranking() if s in subreddits]
 
 
-def bump_chart(elements, n):
+def bump_chart(elements, n, title='Comparison of Models on Subreddits'):
     fig, ax = plt.subplots()
+    fig.set_size_inches(12, 7)
     for element in elements:
         ax.plot(
             element["Model"],
@@ -446,21 +447,17 @@ def bump_chart(elements, n):
         )
         ax.annotate(
             element["Subreddit"],
-            xy=("predicted", element["Rank"][1]),
+            xy=("Cohere", element["Rank"][1]),
             xytext=(1.01, element["Rank"][1]),
-        )
-        ax.annotate(
-            element["Subreddit"],
-            xy=("waller", element["Rank"][0]),
-            xytext=(-0.3, element["Rank"][0]),
+            fontsize=14
         )
 
     plt.gca().invert_yaxis()
-    plt.yticks([i for i in range(1, n + 1)])
+    plt.yticks([i for i in range(1, n + 1)], fontsize=14)
 
     ax.set_xlabel("Model")
     ax.set_ylabel("Rank")
-    ax.set_title("Comparison of Models")
+    ax.set_title(title)
 
     for spine in ax.spines.values():
         spine.set_visible(False)
