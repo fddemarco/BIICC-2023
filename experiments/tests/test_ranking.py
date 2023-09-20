@@ -2,9 +2,8 @@ import pathlib
 
 import pandas as pd
 import pytest
-from experiments.ranking import (
-    Ranking,
-    calc_rbo,
+from experiments.ranking import Ranking, calc_rbo
+from experiments.waller_scores import (
     arxiv_waller_scores,
     arxiv_waller_ranking,
 )
@@ -153,19 +152,6 @@ class TestRanking:
         ranking = Ranking.from_pandas(ranking_as_dataframe)
         score = ranking.roc_auc_score()
         assert 1.0 == pytest.approx(score)
-
-    def test_n_dcg_score(self, waller_ranking):
-        assert 1.0 == pytest.approx(waller_ranking.n_dcg_score())
-
-    def test_n_dcg_sanity(self, monkeypatch):
-        def mock_arxiv_waller_scores(*args, **kwargs):
-            return {"s1": 10, "s2": 0, "s3": 0, "s4": 1, "s5": 5}
-
-        monkeypatch.setattr(
-            "experiments.ranking.arxiv_waller_scores", mock_arxiv_waller_scores
-        )
-        ranking = Ranking({"s1": 0.1, "s2": 0.2, "s3": 0.3, "s4": 4, "s5": 70})
-        assert 0.6956940443813076 == pytest.approx(ranking.n_dcg_score())
 
 
 if __name__ == "__main__":

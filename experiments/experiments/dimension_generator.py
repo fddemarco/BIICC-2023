@@ -173,8 +173,8 @@ class DimensionGenerator:
         n_rows = len(c1_indices)
         for i in range(0, n_rows, self.chunk_size):
             k = min(i + self.chunk_size, n_rows)
-            chunk_xs1 = self.vectors.to_numpy()[c1_indices[i: k]]
-            chunk_xs2 = self.vectors.to_numpy()[c2_indices[i: k]]
+            chunk_xs1 = self.vectors.to_numpy()[c1_indices[i:k]]
+            chunk_xs2 = self.vectors.to_numpy()[c2_indices[i:k]]
 
             pairs_difference = chunk_xs2 - chunk_xs1
 

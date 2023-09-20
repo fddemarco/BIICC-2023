@@ -18,6 +18,8 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import MinMaxScaler
 
+from .waller_scores import arxiv_waller_scores
+
 
 def leaning_right(z_score):
     return z_score > 1
@@ -47,16 +49,22 @@ def dem_rep_field():
 
 class Ranking:
     @classmethod
-    def from_pandas(cls, score_data, p=1.0):
-        score_data = score_data[score_data.index.isin(arxiv_waller_ranking())].copy()
+    def from_pandas(cls, score_data, **kwargs):
         score_data = score_data.to_dict(orient="dict")[dem_rep_field()]
-        return cls(score_data, p)
+        return cls(score_data, **kwargs)
 
-    def __init__(self, ranking: dict, p: int = 1.0):
-        """
-        :param ranking: Para cada subreddit, nos dice su score. {'Conservative': -0.228}
+    def __init__(
+        self, ranking: dict, p: int = 1.0, ground_truth: dict = arxiv_waller_scores()
+    ):
+        """Creates a Ranking Comparison object
+
+        Args:
+            ranking (dict): Observed ranking scores
+            p (int, optional): p parameter for the RBO metrics. Defaults to 1.0.
+            ground_truth (dict, optional): Ground truth ranking scores. Defaults to arxiv_waller_scores().
         """
         self.ranking = ranking
+        self.ground_truth = ground_truth
         self.p = p
 
     def compare_ranking(self):
@@ -83,7 +91,6 @@ class Ranking:
             "Two way RBO": [self.two_way_rbo_score()],
             "H&H RBO": [self.half_and_half_rbo_score()],
             "AUC ROC": [self.roc_auc_score()],
-            "nDCG": [self.n_dcg_score()],
         }
 
     def evaluate_classification_metrics(self):
@@ -178,7 +185,7 @@ class Ranking:
          1 = positively correlated
         """
         predicted_ranking = self.subreddits_sorted_by_score_desc()
-        true_ranking = arxiv_waller_ranking_for(predicted_ranking)
+        true_ranking = self.arxiv_waller_ranking()
         x = [true_ranking.index(item) + 1 for item in predicted_ranking]
         y = [i for i in range(1, len(true_ranking) + 1)]
         res = stats.kendalltau(x, y)
@@ -233,33 +240,17 @@ class Ranking:
         roc_auc = roc_auc_score(labels, probabilities)
         return roc_auc
 
-    def n_dcg_score(self):
-        data = self.score_data()
-        scaled_data = self.min_max_scale(data)
-        return ndcg_score([scaled_data.waller_scores], [scaled_data.scores])
-
-    def score_data(self):
-        waller_scores = [arxiv_waller_score_for(s) for s in self.subreddits()]
-        data = pd.DataFrame({"scores": self.scores(), "waller_scores": waller_scores})
-        return data
-
-    def min_max_scale(self, data):
-        scaler = MinMaxScaler()
-        scaler.fit(data)
-        scaled_data = pd.DataFrame(scaler.transform(data), columns=data.columns)
-        return scaled_data
-
     def subreddits_sorted_by_score_desc(self):
         return sorted(self.subreddits(), key=lambda k: self.score_for(k))
 
     def arxiv_waller_ranking(self):
-        return arxiv_waller_ranking_for(self.subreddits())
+        return [s for s in self.ground_truth if s in self.subreddits()]
 
     # Plots
 
     def bump_plot(self):
         predicted_ranking = self.subreddits_sorted_by_score_desc()
-        waller_ranking = arxiv_waller_ranking_for(predicted_ranking)
+        waller_ranking = self.arxiv_waller_ranking()
         rankings = [
             {
                 "Model": ["waller", "fasttext"],
@@ -390,51 +381,7 @@ def waller_political_party_label_for(subreddit):
     return conservative_label()
 
 
-def arxiv_waller_labels():
-    return {
-        subreddit: waller_political_party_label_for(subreddit)
-        for subreddit in arxiv_waller_ranking()
-    }
-
-
-def arxiv_waller_scores():
-    return {
-        "democrats": -0.345948606707049,
-        "EnoughLibertarianSpam": -0.322594981636269,
-        "hillaryclinton": -0.3027931218773805,
-        "progressive": -0.2994712557588187,
-        "BlueMidterm2018": -0.2977831668625458,
-        "EnoughHillHate": -0.2933539740564371,
-        "Enough_Sanders_Spam": -0.2929483022563205,
-        "badwomensanatomy": -0.2926874460908718,
-        "racism": -0.2921137058022828,
-        "GunsAreCool": -0.290219904193626,
-        "Christians": 0.2607635855569176,
-        "The_Farage": 0.2658256024989052,
-        "new_right": 0.2697649330292293,
-        "conservatives": 0.2743712713632447,
-        "metacanada": 0.2865165930755363,
-        "Mr_Trump": 0.2895610652703748,
-        "NoFapChristians": 0.2934370114397415,
-        "TrueChristian": 0.3142461533194396,
-        "The_Donald": 0.3351316374970578,
-        "Conservative": 0.444171415963574,
-    }
-
-
-def arxiv_waller_score_for(subreddit):
-    return arxiv_waller_scores()[subreddit]
-
-
-def arxiv_waller_ranking():
-    return list(arxiv_waller_scores().keys())
-
-
-def arxiv_waller_ranking_for(subreddits):
-    return [s for s in arxiv_waller_ranking() if s in subreddits]
-
-
-def bump_chart(elements, n, title='Comparison of Models on Subreddits'):
+def bump_chart(elements, n, title="Comparison of Models on Subreddits"):
     fig, ax = plt.subplots()
     fig.set_size_inches(12, 7)
     for element in elements:
@@ -449,7 +396,7 @@ def bump_chart(elements, n, title='Comparison of Models on Subreddits'):
             element["Subreddit"],
             xy=("Cohere", element["Rank"][1]),
             xytext=(1.01, element["Rank"][1]),
-            fontsize=14
+            fontsize=14,
         )
 
     plt.gca().invert_yaxis()
