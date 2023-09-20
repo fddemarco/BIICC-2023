@@ -14,9 +14,7 @@ from sklearn.metrics import (
     roc_curve,
     auc,
     roc_auc_score,
-    ndcg_score,
 )
-from sklearn.preprocessing import MinMaxScaler
 
 from .waller_scores import arxiv_waller_scores
 
@@ -49,8 +47,8 @@ def dem_rep_field():
 
 class Ranking:
     @classmethod
-    def from_pandas(cls, score_data, **kwargs):
-        score_data = score_data.to_dict(orient="dict")[dem_rep_field()]
+    def from_pandas(cls, score_data, field=dem_rep_field(), **kwargs):
+        score_data = score_data.to_dict(orient="dict")[field]
         return cls(score_data, **kwargs)
 
     def __init__(
