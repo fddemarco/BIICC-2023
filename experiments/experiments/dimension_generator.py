@@ -235,7 +235,7 @@ class DimensionGenerator:
 
             i += 1
 
-        indices_to_calc = sorted_directions.index.tolist()
+        indices_to_calc = sorted_directions.index[:self.k].tolist()
         pairs_difference = [
             self.vectors.loc[c2] - self.vectors.loc[c1] for c1, c2 in indices_to_calc
         ]
