@@ -2,8 +2,8 @@ import pathlib
 
 import pandas as pd
 import pytest
-from experiments.ranking import Ranking, calc_rbo
-from experiments.waller_scores import (
+from dimensions.generator.ranking import Ranking, calc_rbo
+from dimensions.generator.waller_scores import (
     arxiv_waller_scores,
     arxiv_waller_ranking,
 )

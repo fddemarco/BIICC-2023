@@ -5,7 +5,7 @@ from pandas.testing import assert_frame_equal
 import pyarrow as pa
 import pyarrow.dataset as ds
 
-from experiments.reddit_posts import RedditPosts
+from dimensions.generator.reddit_posts import RedditPosts
 from experiment_stub import FasttextExperimentStub
 from model_stub import ModelStub
 

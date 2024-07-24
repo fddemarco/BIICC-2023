@@ -3,7 +3,7 @@ import pandas as pd
 from pandas import testing as tm
 import numpy as np
 
-from experiments.dimension_generator import (
+from dimensions.generator.dimension_generator import (
     DimensionGenerator,
     WallerDimenGenerator,
     DimensionGeneratorBis,

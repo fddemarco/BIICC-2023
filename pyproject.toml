@@ -5,8 +5,13 @@ description = ""
 authors = ["fddemarco <franco.demarco3400@gmail.com>"]
 readme = "README.md"
 
+[tool.setuptools]
+packages = ["dimensions"]
+package-dir = {"" = "src"}
+
 [tool.poetry.scripts]
-experiment = "experiments.app:app"
+generator = "src.generator_app:app"
+load = "src.loader_app:app"
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
