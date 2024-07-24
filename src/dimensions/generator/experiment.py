@@ -4,14 +4,14 @@
 
 import pathlib
 
-import matplotlib.pyplot as plt
-import pyarrow.dataset as ds
-import pandas as pd
-
 import fasttext
+import matplotlib.pyplot as plt
+import pandas as pd
+import pyarrow.dataset as ds
+
 from dimensions.generator import dimension_generator as dg
-from dimensions.generator import reddit_posts as rps
 from dimensions.generator import ranking as rk
+from dimensions.generator import reddit_posts as rps
 
 
 class Experiment:

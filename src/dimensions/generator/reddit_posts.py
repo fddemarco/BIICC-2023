@@ -1,9 +1,9 @@
+from typing import Iterator, List, TypeAlias
+
 import pandas as pd
 import pyarrow.dataset as ds
-from typing import TypeAlias, List, Iterator
 
-from dimensions.generator.posts_type import Submissions, Comments
-
+from dimensions.generator.posts_type import Comments, Submissions
 
 Community: TypeAlias = str
 

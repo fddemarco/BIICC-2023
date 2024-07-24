@@ -2,11 +2,9 @@ import pathlib
 
 import pandas as pd
 import pytest
+
 from dimensions.generator.ranking import Ranking, calc_rbo
-from dimensions.generator.waller_scores import (
-    arxiv_waller_scores,
-    arxiv_waller_ranking,
-)
+from dimensions.generator.waller_scores import arxiv_waller_ranking, arxiv_waller_scores
 
 
 @pytest.fixture()

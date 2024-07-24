@@ -4,12 +4,11 @@ CLI is defined in this module.
 
 from pathlib import Path
 
-from typing_extensions import Annotated
 import typer
-
+from typing_extensions import Annotated
 
 from dimensions.generator.experiment import Experiment
-from dimensions.generator.options import Command, Types, ResultDir, Dataset
+from dimensions.generator.options import Command, Dataset, ResultDir, Types
 
 
 def range_help():

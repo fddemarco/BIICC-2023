@@ -1,7 +1,7 @@
 """
     This module generates d-ness scores from given dimension seed pairs
 """
-from typing import TypeAlias, List, Tuple
+from typing import List, Tuple, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
@@ -235,7 +235,7 @@ class DimensionGenerator:
 
             i += 1
 
-        indices_to_calc = sorted_directions.index[:self.k].tolist()
+        indices_to_calc = sorted_directions.index[: self.k].tolist()
         pairs_difference = [
             self.vectors.loc[c2] - self.vectors.loc[c1] for c1, c2 in indices_to_calc
         ]
@@ -284,10 +284,10 @@ class DimensionGeneratorBis(DimensionGenerator):
         return seed_similarities
 
 
+import os
+
 import numpy as np
 import pandas as pd
-
-import os
 
 
 def load_embedding():

@@ -5,15 +5,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import rbo
-from scipy import stats
 import seaborn as sns
+from scipy import stats
 from sklearn.metrics import (
+    auc,
+    f1_score,
     precision_score,
     recall_score,
-    f1_score,
-    roc_curve,
-    auc,
     roc_auc_score,
+    roc_curve,
 )
 
 from dimensions.generator.waller_scores import arxiv_waller_scores

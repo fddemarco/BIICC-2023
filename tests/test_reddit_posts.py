@@ -1,13 +1,13 @@
 import unittest
 
 import pandas as pd
-from pandas.testing import assert_frame_equal
 import pyarrow as pa
 import pyarrow.dataset as ds
-
-from dimensions.generator.reddit_posts import RedditPosts
 from experiment_stub import FasttextExperimentStub
 from model_stub import ModelStub
+from pandas.testing import assert_frame_equal
+
+from dimensions.generator.reddit_posts import RedditPosts
 
 
 class RedditPostsTestCase(unittest.TestCase):

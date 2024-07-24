@@ -1,12 +1,12 @@
-import pytest
-import pandas as pd
-from pandas import testing as tm
 import numpy as np
+import pandas as pd
+import pytest
+from pandas import testing as tm
 
 from dimensions.generator.dimension_generator import (
     DimensionGenerator,
-    WallerDimenGenerator,
     DimensionGeneratorBis,
+    WallerDimenGenerator,
 )
 
 

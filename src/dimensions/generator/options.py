@@ -2,7 +2,8 @@
     Module for CLI Arguments Classes
 """
 from enum import Enum
-from dimensions.generator.posts_type import Submissions, Comments
+
+from dimensions.generator.posts_type import Comments, Submissions
 
 
 class Options(str, Enum):
