@@ -8,8 +8,8 @@ from typing_extensions import Annotated
 import typer
 
 
-from experiments.experiment import Experiment
-from experiments.options import Command, Types, ResultDir, Dataset
+from dimensions.generator.experiment import Experiment
+from dimensions.generator.options import Command, Types, ResultDir, Dataset
 
 
 def range_help():
