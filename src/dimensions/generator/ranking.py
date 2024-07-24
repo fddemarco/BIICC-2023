@@ -16,7 +16,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from .waller_scores import arxiv_waller_scores
+from dimensions.generator.waller_scores import arxiv_waller_scores
 
 
 def leaning_right(z_score):

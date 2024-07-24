@@ -1,7 +1,7 @@
 """
     This module generates d-ness scores from given dimension seed pairs
 """
-from typing import TypeAlias, List, Sequence, Tuple
+from typing import TypeAlias, List, Tuple
 
 import numpy as np
 import numpy.typing as npt

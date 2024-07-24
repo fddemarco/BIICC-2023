@@ -2,7 +2,7 @@ import pandas as pd
 import pyarrow.dataset as ds
 from typing import TypeAlias, List, Iterator
 
-from .posts_type import Submissions, Comments
+from dimensions.generator.posts_type import Submissions, Comments
 
 
 Community: TypeAlias = str

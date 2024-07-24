@@ -9,9 +9,9 @@ import pyarrow.dataset as ds
 import pandas as pd
 
 import fasttext
-import experiments.dimension_generator as dg
-import experiments.reddit_posts as rps
-import experiments.ranking as rk
+from dimensions.generator import dimension_generator as dg
+from dimensions.generator import reddit_posts as rps
+from dimensions.generator import ranking as rk
 
 
 class Experiment:
