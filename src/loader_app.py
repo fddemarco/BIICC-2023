@@ -1,7 +1,7 @@
 import click
 
-from dataset import Submissions
-from dataset import Comments
+from dimensions.loader.dataset import Submissions
+from dimensions.loader.dataset import Comments
 
 
 @click.command()
